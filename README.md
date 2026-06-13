@@ -24,15 +24,20 @@ fungerer også **utan nett**. All data ligg lokalt på telefonen din.
 
 ## Publisering (få ei adresse å installere frå)
 
-Repoet har ein GitHub Actions-arbeidsflyt som publiserer appen til **GitHub Pages**
-automatisk når det blir pusha. Slik slår du det på (éin gong):
+Appen blir publisert med **GitHub Pages**. Slik slår du det på (éin gong):
 
 1. Gå til repoet på GitHub → **Settings** → **Pages**.
-2. Under **Build and deployment** → **Source**, vel **GitHub Actions**.
-3. Vent til arbeidsflyten «Deploy til GitHub Pages» er ferdig (fana **Actions**).
-4. Adressa blir noko slikt som `https://ingarteigene-svg.github.io/honseri/`.
+2. Under **Build and deployment** → **Source**, vel **Deploy from a branch**.
+3. Under **Branch**, vel `claude/egg-production-app-nt4j7i` og mappa `/ (root)`,
+   og trykk **Save**.
+4. Vent eit minutt eller to. Adressa blir:
+   **`https://ingarteigene-svg.github.io/honseri/`**
 
-Opne den adressa i Safari på iPhone og følg installasjonsstega over.
+> ⚠️ Hugs `/honseri/` til slutt — rot-adressa `ingarteigene-svg.github.io`
+> gjev «404 File not found».
+
+Opne `https://ingarteigene-svg.github.io/honseri/` i Safari på iPhone og følg
+installasjonsstega over.
 
 > Tips: Du kan også teste appen lokalt ved å køyre ein liten webserver i mappa,
 > t.d. `python3 -m http.server`, og opne `http://localhost:8000`.
@@ -52,4 +57,4 @@ appen, forsvinn registreringane, så eksporter regelmessig.
 | `manifest.webmanifest` | PWA-manifest (namn, ikon, farge). |
 | `sw.js` | Service worker — gjer at appen virkar offline. |
 | `icons/` | App-ikon (192/512 px + apple-touch-icon). |
-| `.github/workflows/deploy-pages.yml` | Auto-publisering til GitHub Pages. |
+| `.nojekyll` | Gjer at GitHub Pages serverer filene uendra. |
