@@ -2,8 +2,18 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Hønseri — Dagsregistrering</title>
+
+<!-- PWA / iPhone -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5A7A4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hønseri">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+
 <style>
   :root {
     --bg: #FAF7F2;
@@ -22,14 +32,15 @@
     --font: 'Georgia', serif;
     --mono: 'Courier New', monospace;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
   }
-  .app { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .app { max-width: 860px; margin: 0 auto; padding: calc(1.5rem + env(safe-area-inset-top)) 1.5rem calc(2rem + env(safe-area-inset-bottom)); }
 
   /* Header */
   .header { border-bottom: 2px solid var(--text); padding-bottom: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; }
@@ -49,8 +60,8 @@
   input[type="number"], input[type="date"], textarea, select {
     border: 1px solid var(--border-strong);
     background: var(--card);
-    padding: 0.55rem 0.75rem;
-    font-size: 1rem;
+    padding: 0.65rem 0.75rem;
+    font-size: 16px;
     font-family: var(--font);
     color: var(--text);
     border-radius: 2px;
@@ -66,7 +77,7 @@
   .radio-btn input { display: none; }
   .radio-btn label {
     display: block; text-align: center;
-    padding: 0.55rem 0.5rem;
+    padding: 0.6rem 0.5rem;
     border: 1px solid var(--border-strong);
     background: var(--card);
     cursor: pointer;
@@ -97,7 +108,7 @@
   .btn-submit {
     margin-top: 1.5rem; width: 100%;
     background: var(--accent); color: #fff;
-    border: none; padding: 0.85rem;
+    border: none; padding: 0.95rem;
     font-size: 0.8rem; font-family: var(--mono);
     letter-spacing: 0.15em; text-transform: uppercase;
     cursor: pointer; border-radius: 2px;
@@ -108,11 +119,12 @@
 
   /* Toast */
   .toast {
-    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    position: fixed; bottom: calc(1.5rem + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
     background: var(--accent); color: #fff;
     padding: 0.65rem 1.5rem; font-family: var(--mono); font-size: 0.8rem;
     letter-spacing: 0.08em; border-radius: 2px;
     opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+    max-width: 90%; text-align: center;
   }
   .toast.show { opacity: 1; }
 
@@ -124,7 +136,7 @@
   .stat-box .s-sub { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.15rem; }
 
   /* Table */
-  .table-wrap { overflow-x: auto; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
   th {
     font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
@@ -135,7 +147,7 @@
   td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--accent-light); }
-  .badge { font-size: 0.68rem; font-family: var(--mono); padding: 0.15rem 0.5rem; border-radius: 2px; }
+  .badge { font-size: 0.68rem; font-family: var(--mono); padding: 0.15rem 0.5rem; border-radius: 2px; white-space: nowrap; }
   .badge-la { background: var(--amber-light); color: var(--amber); }
   .badge-na { background: var(--accent-light); color: var(--accent-dark); }
   .badge-va { background: #F0EDF5; color: #6B5EA8; }
@@ -144,14 +156,17 @@
   .btn-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; font-family: var(--mono); padding: 0.15rem 0.4rem; border-radius: 2px; }
   .btn-del:hover { background: var(--red-light); color: var(--red); }
 
-  /* Export btn */
+  /* Export buttons */
+  .export-bar { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.75rem; flex-wrap: wrap; }
   .export-btn {
-    float: right; background: none; border: 1px solid var(--border-strong);
-    padding: 0.35rem 0.85rem; font-size: 0.68rem; font-family: var(--mono);
+    background: none; border: 1px solid var(--border-strong);
+    padding: 0.45rem 0.95rem; font-size: 0.68rem; font-family: var(--mono);
     letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
-    color: var(--text-muted); border-radius: 2px; margin-bottom: 0.75rem;
+    color: var(--text-muted); border-radius: 2px;
   }
   .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .export-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .export-btn.primary:hover { background: var(--accent-dark); color: #fff; }
 
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; }
 
@@ -159,6 +174,16 @@
   .filter-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
   .filter-row select { width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem; }
   .filter-row label { font-size: 0.7rem; white-space: nowrap; }
+
+  /* Install hint */
+  .install-hint {
+    background: var(--amber-light); border: 1px solid var(--amber);
+    color: var(--amber); border-radius: 4px; padding: 0.75rem 1rem;
+    font-size: 0.8rem; margin-bottom: 1.5rem; display: none; position: relative;
+    line-height: 1.5;
+  }
+  .install-hint b { color: var(--amber); }
+  .install-hint .close-hint { position: absolute; top: 0.4rem; right: 0.6rem; cursor: pointer; font-family: var(--mono); border: none; background: none; color: var(--amber); font-size: 1rem; }
 
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
@@ -175,6 +200,11 @@
       <div class="subtitle">Dagsregistrering</div>
     </div>
     <div id="today-display" style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);"></div>
+  </div>
+
+  <div class="install-hint" id="install-hint">
+    <button class="close-hint" onclick="dismissHint()">×</button>
+    <b>Tips:</b> Legg appen på hjemskjermen — trykk <b>Del</b>-ikonet i Safari og velg <b>«Legg til på Hjem-skjerm»</b>. Da virker den som ein vanleg app, også utan nett.
   </div>
 
   <div class="tab-bar">
@@ -201,48 +231,52 @@
       </div>
       <div class="form-group">
         <label>Antall egg plukka <span class="req">*</span></label>
-        <input type="number" id="egg" min="0" placeholder="0">
+        <input type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
       </div>
 
       <div class="section-title">Brett til gardsbutikk</div>
 
       <div class="form-group">
         <label>Store brett <span class="req">*</span></label>
-        <input type="number" id="store" min="0" placeholder="0">
+        <input type="number" id="store" min="0" inputmode="numeric" placeholder="0">
       </div>
       <div class="form-group">
         <label>Vanlege brett <span class="req">*</span></label>
-        <input type="number" id="vanlige" min="0" placeholder="0">
+        <input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0">
       </div>
       <div class="form-group">
         <label>Kartongar <span class="req">*</span></label>
-        <input type="number" id="kartonger" min="0" placeholder="0">
+        <input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0">
       </div>
       <div class="form-group">
         <label>Klink brett <span class="req">*</span></label>
-        <input type="number" id="klink" min="0" placeholder="0">
+        <input type="number" id="klink" min="0" inputmode="numeric" placeholder="0">
       </div>
 
       <div class="section-title">Pakking av paller</div>
 
       <div class="form-group">
         <label>200-paller (antall)</label>
-        <input type="number" id="pall200" min="0" placeholder="0">
+        <input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0">
       </div>
       <div class="form-group">
         <label>228-paller (antall)</label>
-        <input type="number" id="pall228" min="0" placeholder="0">
+        <input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0">
       </div>
 
       <div class="section-title">Driftsdata</div>
 
       <div class="form-group">
         <label>For på siloen <span class="req">*</span></label>
-        <input type="number" id="for" min="0" placeholder="0">
+        <input type="number" id="for" min="0" inputmode="decimal" placeholder="0">
       </div>
       <div class="form-group">
         <label>Vannmålar <span class="req">*</span></label>
-        <input type="number" id="vann" min="0" placeholder="0">
+        <input type="number" id="vann" min="0" inputmode="decimal" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Døde høner</label>
+        <input type="number" id="dode" min="0" inputmode="numeric" placeholder="0">
       </div>
 
       <div class="form-group full">
@@ -256,7 +290,10 @@
 
   <!-- TAB: LOG -->
   <div id="tab-log" style="display:none;">
-    <button class="export-btn" onclick="exportCSV()">Eksporter CSV</button>
+    <div class="export-bar">
+      <button class="export-btn primary" onclick="exportExcel()">Eksporter til Excel</button>
+      <button class="export-btn" id="share-btn" onclick="shareExcel()" style="display:none;">Del / send</button>
+    </div>
     <div class="filter-row">
       <label>Filtrer:</label>
       <select id="filter-person" onchange="renderLog()">
@@ -270,7 +307,7 @@
       <table>
         <thead>
           <tr>
-            <th>Dato</th><th>Namn</th><th>Egg</th><th>Store</th><th>Vanlege</th><th>Kartongar</th><th>Klink</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Kommentar</th><th></th>
+            <th>Dato</th><th>Namn</th><th>Egg</th><th>Store</th><th>Vanlege</th><th>Kartongar</th><th>Klink</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Døde</th><th>Kommentar</th><th></th>
           </tr>
         </thead>
         <tbody id="log-body"></tbody>
@@ -300,7 +337,8 @@ function saveEntries(arr) {
 
 function today() {
   const d = new Date();
-  return d.toISOString().slice(0, 10);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off*60000).toISOString().slice(0, 10);
 }
 
 function formatDate(iso) {
@@ -319,7 +357,24 @@ window.onload = function() {
     const radio = document.querySelector(`input[name="navn"][value="${lastPerson}"]`);
     if (radio) radio.checked = true;
   }
+
+  // Show share button only where supported (iPhone Safari supports file share)
+  if (navigator.canShare) {
+    document.getElementById('share-btn').style.display = '';
+  }
+
+  // Install hint: only on iOS Safari, when not already installed, and not dismissed
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !standalone && !localStorage.getItem('hint_dismissed')) {
+    document.getElementById('install-hint').style.display = 'block';
+  }
 };
+
+function dismissHint() {
+  document.getElementById('install-hint').style.display = 'none';
+  localStorage.setItem('hint_dismissed', '1');
+}
 
 function showTab(tab) {
   ['form','log','stats'].forEach(t => {
@@ -344,6 +399,7 @@ function submitForm() {
   const vann = document.getElementById('vann').value;
   const pall200 = document.getElementById('pall200').value;
   const pall228 = document.getElementById('pall228').value;
+  const dode = document.getElementById('dode').value;
   const kommentar = document.getElementById('kommentar').value.trim();
 
   if (!navn || !dato || egg === '' || store === '' || vanlige === '' || kartonger === '' || klink === '' || forVal === '' || vann === '') {
@@ -359,6 +415,7 @@ function submitForm() {
     pall200: pall200 === '' ? 0 : +pall200,
     pall228: pall228 === '' ? 0 : +pall228,
     for: +forVal, vann: +vann,
+    dode: dode === '' ? 0 : +dode,
     kommentar
   };
 
@@ -366,16 +423,9 @@ function submitForm() {
   entries.push(entry);
   saveEntries(entries);
 
-  document.getElementById('egg').value = '';
-  document.getElementById('store').value = '';
-  document.getElementById('vanlige').value = '';
-  document.getElementById('kartonger').value = '';
-  document.getElementById('klink').value = '';
-  document.getElementById('pall200').value = '';
-  document.getElementById('pall228').value = '';
-  document.getElementById('for').value = '';
-  document.getElementById('vann').value = '';
-  document.getElementById('kommentar').value = '';
+  ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','kommentar'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
   document.getElementById('dato').value = today();
 
   toast('Registrering lagra ✓');
@@ -422,6 +472,7 @@ function renderLog() {
       <td>${e.pall228 || 0}</td>
       <td>${e.for}</td>
       <td>${e.vann}</td>
+      <td>${e.dode || 0}</td>
       <td style="color:var(--text-muted);font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e.kommentar}">${e.kommentar || '—'}</td>
       <td><button class="btn-del" onclick="deleteEntry(${e.id})">slett</button></td>
     `;
@@ -437,16 +488,167 @@ function deleteEntry(id) {
   toast('Sletta');
 }
 
-function exportCSV() {
-  const entries = loadEntries();
-  if (!entries.length) { toast('Ingen data å eksportere', true); return; }
-  const header = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For','Vatn','Kommentar'];
-  const rows = entries.map(e => [e.dato, e.navn, e.egg, e.store, e.vanlige, e.kartonger, e.klink, e.pall200||0, e.pall228||0, e.for, e.vann, `"${(e.kommentar||'').replace(/"/g,'""')}"`]);
-  const csv = [header, ...rows].map(r => r.join(';')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'hønseri_logg.csv'; a.click();
+/* ---------- Excel-eksport ---------- */
+
+const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Kommentar'];
+
+function entryRow(e) {
+  return [
+    formatDate(e.dato), e.navn, e.egg, e.store, e.vanlige, e.kartonger,
+    e.klink, e.pall200||0, e.pall228||0, e.for, e.vann, e.dode||0, e.kommentar||''
+  ];
 }
+
+function sortedEntries() {
+  return [...loadEntries()].sort((a, b) => a.dato.localeCompare(b.dato));
+}
+
+function buildXlsxBlob() {
+  const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
+  return new Blob([makeXlsx(rows, 'Hønseri')], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+}
+
+function exportExcel() {
+  if (!loadEntries().length) { toast('Ingen data å eksportere', true); return; }
+  const url = URL.createObjectURL(buildXlsxBlob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = exportName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Excel-fil lasta ned ✓');
+}
+
+async function shareExcel() {
+  if (!loadEntries().length) { toast('Ingen data å dele', true); return; }
+  const file = new File([buildXlsxBlob()], exportName(), {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Hønseri-logg' });
+    } else {
+      exportExcel();
+    }
+  } catch (err) {
+    if (err && err.name !== 'AbortError') exportExcel();
+  }
+}
+
+function exportName() {
+  return `honseri_logg_${today()}.xlsx`;
+}
+
+/* Minimal XLSX-generator (rein JS, ingen bibliotek).
+   Byggjer ei .xlsx-fil (zip med "store"-metode + CRC32). */
+function makeXlsx(rows, sheetName) {
+  const colName = n => { let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26|0; } return s; };
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  let sheetRows = '';
+  rows.forEach((row, r) => {
+    let cells = '';
+    row.forEach((val, c) => {
+      const ref = colName(c) + (r+1);
+      if (typeof val === 'number' && isFinite(val)) {
+        cells += `<c r="${ref}"><v>${val}</v></c>`;
+      } else {
+        const t = (val === null || val === undefined) ? '' : String(val);
+        cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${esc(t)}</t></is></c>`;
+      }
+    });
+    sheetRows += `<row r="${r+1}">${cells}</row>`;
+  });
+
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${esc(sheetName).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+
+  const files = [
+    { name: '[Content_Types].xml', data: contentTypes },
+    { name: '_rels/.rels', data: rootRels },
+    { name: 'xl/workbook.xml', data: workbookXml },
+    { name: 'xl/_rels/workbook.xml.rels', data: workbookRels },
+    { name: 'xl/worksheets/sheet1.xml', data: sheetXml },
+  ];
+  return zipStore(files);
+}
+
+/* CRC32 */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n=0; n<256; n++) {
+    let c = n;
+    for (let k=0; k<8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i=0; i<bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* Lag ein ZIP med "store" (ingen komprimering) */
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+
+  const u16 = n => [n & 0xFF, (n >>> 8) & 0xFF];
+  const u32 = n => [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
+
+  files.forEach(f => {
+    const nameBytes = enc.encode(f.name);
+    const dataBytes = enc.encode(f.data);
+    const crc = crc32(dataBytes);
+    const size = dataBytes.length;
+
+    const local = [].concat(
+      u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0)
+    );
+    chunks.push(new Uint8Array(local), nameBytes, dataBytes);
+
+    const cen = [].concat(
+      u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(size), u32(size),
+      u16(nameBytes.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(offset)
+    );
+    central.push(new Uint8Array(cen), nameBytes);
+
+    offset += local.length + nameBytes.length + size;
+  });
+
+  const centralStart = offset;
+  let centralSize = 0;
+  central.forEach(c => centralSize += c.length);
+
+  const end = new Uint8Array([].concat(
+    u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length),
+    u32(centralSize), u32(centralStart), u16(0)
+  ));
+
+  return new Blob([...chunks, ...central, end]);
+}
+
+/* ---------- Oversikt ---------- */
 
 function renderStats() {
   const entries = loadEntries();
@@ -487,14 +689,13 @@ function renderStats() {
     </div>
   `;
 
-  // Last 14 days breakdown
   const sorted = [...entries].sort((a, b) => b.dato.localeCompare(a.dato)).slice(0, 14);
   let tableHTML = `
     <div style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:0.5rem;">
       <div style="font-size:0.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:0.75rem;">Siste 14 registreringar</div>
       <div class="table-wrap"><table>
         <thead><tr>
-          <th>Dato</th><th>Namn</th><th>Egg</th><th>Butikk (store+vanlege+kart.+klink)</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th>
+          <th>Dato</th><th>Namn</th><th>Egg</th><th>Butikk (store+vanlege+kart.+klink)</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Døde</th>
         </tr></thead><tbody>
   `;
   sorted.forEach(e => {
@@ -508,10 +709,18 @@ function renderStats() {
       <td>${e.pall228 || 0}</td>
       <td>${e.for}</td>
       <td>${e.vann}</td>
+      <td>${e.dode || 0}</td>
     </tr>`;
   });
   tableHTML += '</tbody></table></div></div>';
   weekly.innerHTML = tableHTML;
+}
+
+/* ---------- Service worker ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
 }
 </script>
 </body>
