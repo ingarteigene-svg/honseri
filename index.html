@@ -2,12 +2,12 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Hønseri — Dagsregistrering</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>Hønseri</title>
 
 <!-- PWA / iPhone -->
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#5A7A4A">
+<meta name="theme-color" content="#16181A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hønseri">
@@ -16,711 +16,665 @@
 
 <style>
   :root {
-    --bg: #FAF7F2;
-    --card: #FFFFFF;
-    --border: #E2DDD6;
-    --border-strong: #C8C2B9;
-    --text: #1C1A17;
-    --text-muted: #7A746C;
-    --accent: #5A7A4A;
-    --accent-light: #EAF2E3;
-    --accent-dark: #3D5733;
-    --amber: #C17D2A;
-    --amber-light: #FDF3E3;
-    --red: #C44B35;
-    --red-light: #FBF0EE;
-    --font: 'Georgia', serif;
-    --mono: 'Courier New', monospace;
+    --bg: #16181A;
+    --bg-elev: #1C1F22;
+    --surface: #212528;
+    --surface-2: #282D31;
+    --surface-3: #31373C;
+    --border: #2D3237;
+    --border-strong: #3A4147;
+    --text: #ECEFF1;
+    --text-muted: #9BA3AA;
+    --text-dim: #6B737A;
+    --accent: #7CC36A;
+    --accent-press: #6BB158;
+    --accent-soft: rgba(124,195,106,0.13);
+    --amber: #E3A445;
+    --amber-soft: rgba(227,164,69,0.13);
+    --red: #E5675A;
+    --red-soft: rgba(229,103,90,0.13);
+    --violet: #9B8CE0;
+    --violet-soft: rgba(155,140,224,0.14);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 4px 18px rgba(0,0,0,0.35);
+    --nav-h: 64px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { color-scheme: dark; }
   body {
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
   }
-  .app { max-width: 860px; margin: 0 auto; padding: calc(1.5rem + env(safe-area-inset-top)) 1.5rem calc(2rem + env(safe-area-inset-bottom)); }
+  .app { max-width: 720px; margin: 0 auto; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); }
 
-  /* Header */
-  .header { border-bottom: 2px solid var(--text); padding-bottom: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; }
-  .header h1 { font-size: 1.5rem; font-weight: normal; letter-spacing: 0.12em; text-transform: uppercase; }
-  .header .subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.25rem; }
-  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border-strong); margin-bottom: 1.75rem; }
-  .tab { padding: 0.5rem 1.25rem; font-size: 0.8rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; color: var(--text-muted); background: transparent; }
-  .tab.active { background: var(--card); border-color: var(--border-strong); color: var(--text); border-bottom-color: var(--card); }
-  .tab:hover:not(.active) { color: var(--text); }
-
-  /* Form */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
-  .form-group.full { grid-column: 1 / -1; }
-  label { font-size: 0.7rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
-  label .req { color: var(--red); }
-  input[type="number"], input[type="date"], textarea, select {
+  /* ---------- Topbar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(22,24,26,0.82);
+    backdrop-filter: saturate(160%) blur(14px);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand .logo {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(160deg, #2C3136, #16181A);
+    display: grid; place-items: center; font-size: 19px;
     border: 1px solid var(--border-strong);
-    background: var(--card);
-    padding: 0.65rem 0.75rem;
-    font-size: 16px;
-    font-family: var(--font);
-    color: var(--text);
-    border-radius: 2px;
-    width: 100%;
-    transition: border-color 0.15s;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 70px; }
+  .brand h1 { font-size: 1.15rem; font-weight: 650; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 0.7rem; color: var(--text-dim); font-weight: 500; margin-top: 1px; }
+  .topbar .date { font-size: 0.78rem; color: var(--text-muted); font-weight: 500; text-align: right; }
+  .topbar .date .d { color: var(--text); font-weight: 600; display: block; font-size: 0.92rem; }
 
-  /* Radio som knapper */
-  .radio-group { display: flex; gap: 0.5rem; }
-  .radio-btn { flex: 1; }
-  .radio-btn input { display: none; }
-  .radio-btn label {
-    display: block; text-align: center;
-    padding: 0.6rem 0.5rem;
-    border: 1px solid var(--border-strong);
-    background: var(--card);
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    letter-spacing: 0.05em;
-    text-transform: none;
-    color: var(--text);
-    border-radius: 2px;
-    transition: all 0.12s;
-  }
-  .radio-btn input:checked + label {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .radio-btn label:hover { border-color: var(--accent); }
+  /* ---------- Views ---------- */
+  .view { padding: 18px 16px 8px; display: none; animation: fade 0.22s ease; }
+  .view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  /* Section divider */
-  .section-title {
-    font-size: 0.68rem; font-family: var(--mono); text-transform: uppercase;
-    letter-spacing: 0.15em; color: var(--text-muted);
-    padding: 0.5rem 0; border-top: 1px solid var(--border);
-    margin-top: 0.25rem; grid-column: 1 / -1;
-  }
-
-  /* Submit */
-  .btn-submit {
-    margin-top: 1.5rem; width: 100%;
-    background: var(--accent); color: #fff;
-    border: none; padding: 0.95rem;
-    font-size: 0.8rem; font-family: var(--mono);
-    letter-spacing: 0.15em; text-transform: uppercase;
-    cursor: pointer; border-radius: 2px;
-    transition: background 0.15s;
-  }
-  .btn-submit:hover { background: var(--accent-dark); }
-  .btn-submit:disabled { background: var(--border-strong); cursor: not-allowed; }
-
-  /* Toast */
-  .toast {
-    position: fixed; bottom: calc(1.5rem + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
-    background: var(--accent); color: #fff;
-    padding: 0.65rem 1.5rem; font-family: var(--mono); font-size: 0.8rem;
-    letter-spacing: 0.08em; border-radius: 2px;
-    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
-    max-width: 90%; text-align: center;
-  }
-  .toast.show { opacity: 1; }
-
-  /* Stats bar */
-  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.75rem; }
-  .stat-box { background: var(--card); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 2px; }
-  .stat-box .s-label { font-size: 0.65rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.3rem; }
-  .stat-box .s-val { font-size: 1.5rem; font-weight: normal; }
-  .stat-box .s-sub { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.15rem; }
-
-  /* Table */
-  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  th {
-    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-muted); font-weight: normal;
-    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-strong);
-    text-align: left; white-space: nowrap;
-  }
-  td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--accent-light); }
-  .badge { font-size: 0.68rem; font-family: var(--mono); padding: 0.15rem 0.5rem; border-radius: 2px; white-space: nowrap; }
-  .badge-la { background: var(--amber-light); color: var(--amber); }
-  .badge-na { background: var(--accent-light); color: var(--accent-dark); }
-  .badge-va { background: #F0EDF5; color: #6B5EA8; }
-
-  /* Delete btn */
-  .btn-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; font-family: var(--mono); padding: 0.15rem 0.4rem; border-radius: 2px; }
-  .btn-del:hover { background: var(--red-light); color: var(--red); }
-
-  /* Export buttons */
-  .export-bar { display: flex; gap: 0.5rem; justify-content: flex-end; margin-bottom: 0.75rem; flex-wrap: wrap; }
-  .export-btn {
-    background: none; border: 1px solid var(--border-strong);
-    padding: 0.45rem 0.95rem; font-size: 0.68rem; font-family: var(--mono);
-    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
-    color: var(--text-muted); border-radius: 2px;
-  }
-  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .export-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .export-btn.primary:hover { background: var(--accent-dark); color: #fff; }
-
-  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; }
-
-  /* Filter row */
-  .filter-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
-  .filter-row select { width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem; }
-  .filter-row label { font-size: 0.7rem; white-space: nowrap; }
-
-  /* Install hint */
   .install-hint {
-    background: var(--amber-light); border: 1px solid var(--amber);
-    color: var(--amber); border-radius: 4px; padding: 0.75rem 1rem;
-    font-size: 0.8rem; margin-bottom: 1.5rem; display: none; position: relative;
-    line-height: 1.5;
+    background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.35);
+    color: #F0C079; border-radius: var(--radius-sm); padding: 13px 38px 13px 14px;
+    font-size: 0.83rem; margin-bottom: 16px; position: relative; line-height: 1.5;
   }
-  .install-hint b { color: var(--amber); }
-  .install-hint .close-hint { position: absolute; top: 0.4rem; right: 0.6rem; cursor: pointer; font-family: var(--mono); border: none; background: none; color: var(--amber); font-size: 1rem; }
+  .install-hint b { color: #F3CE8C; font-weight: 650; }
+  .install-hint .close-hint { position: absolute; top: 8px; right: 10px; cursor: pointer; border: none; background: none; color: #F0C079; font-size: 1.2rem; line-height: 1; }
 
-  @media (max-width: 600px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    .header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-dim); font-weight: 650; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .card-title svg { width: 15px; height: 15px; opacity: 0.85; }
+
+  /* ---------- Hero egg input ---------- */
+  .hero { text-align: center; padding: 22px 16px; }
+  .hero .hero-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; margin-bottom: 14px; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .stepper button {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 1px solid var(--border-strong); background: var(--surface-2);
+    color: var(--text); font-size: 1.7rem; font-weight: 400; line-height: 1;
+    cursor: pointer; display: grid; place-items: center; flex-shrink: 0;
+    transition: background 0.12s, transform 0.08s;
+  }
+  .stepper button:active { background: var(--surface-3); transform: scale(0.93); }
+  .hero-input {
+    width: 150px; background: transparent; border: none; text-align: center;
+    font-size: 3.4rem; font-weight: 680; color: var(--text); letter-spacing: -0.02em;
+    -moz-appearance: textfield;
+  }
+  .hero-input::-webkit-outer-spin-button, .hero-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .hero-input:focus { outline: none; }
+  .hero .hero-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; }
+
+  /* ---------- Person selector ---------- */
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .seg .opt input { display: none; }
+  .seg .opt label {
+    display: block; text-align: center; padding: 13px 6px;
+    border: 1px solid var(--border-strong); background: var(--surface-2);
+    border-radius: var(--radius-sm); cursor: pointer; font-size: 0.86rem; font-weight: 550;
+    color: var(--text-muted); transition: all 0.13s;
+  }
+  .seg .opt input:checked + label {
+    background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
+    font-weight: 650;
+  }
+
+  /* ---------- Form fields ---------- */
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 0.76rem; color: var(--text-muted); font-weight: 550; }
+  .field .unit { color: var(--text-dim); font-weight: 400; }
+  input[type="number"], input[type="date"], input[type="text"], textarea, select {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm); padding: 13px 14px; font-size: 16px;
+    font-family: var(--font); color: var(--text); transition: border-color 0.13s, background 0.13s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); background: var(--bg-elev); }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); }
+  textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+  input[type="date"] { color-scheme: dark; }
+
+  /* ---------- Submit ---------- */
+  .submit-wrap { padding: 4px 16px 16px; }
+  .btn-primary {
+    width: 100%; background: var(--accent); color: #10240B; border: none;
+    padding: 16px; font-size: 1rem; font-weight: 680; border-radius: var(--radius);
+    cursor: pointer; font-family: var(--font); transition: background 0.13s, transform 0.08s;
+    box-shadow: 0 4px 14px rgba(124,195,106,0.22);
+  }
+  .btn-primary:active { background: var(--accent-press); transform: scale(0.99); }
+
+  /* ---------- Buttons (secondary) ---------- */
+  .btn-row { display: flex; gap: 9px; margin-bottom: 14px; }
+  .btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border-strong); color: var(--text);
+    padding: 12px; font-size: 0.86rem; font-weight: 600; border-radius: var(--radius-sm);
+    cursor: pointer; font-family: var(--font); transition: background 0.12s, border-color 0.12s;
+  }
+  .btn:active { background: var(--surface-2); }
+  .btn svg { width: 16px; height: 16px; }
+  .btn.accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Stats ---------- */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px;
+  }
+  .stat .v { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .v.sm { font-size: 1.2rem; }
+  .stat .l { font-size: 0.72rem; color: var(--text-muted); font-weight: 550; margin-top: 4px; }
+  .stat .s { font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; }
+  .stat.accent .v { color: var(--accent); }
+
+  /* ---------- Log list ---------- */
+  .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .filter-row select { width: auto; flex: 1; padding: 10px 12px; font-size: 0.9rem; }
+  .entry {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+  .entry-head .left { display: flex; align-items: center; gap: 10px; }
+  .entry-date { font-size: 0.92rem; font-weight: 650; }
+  .pill { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .pill-la { background: var(--amber-soft); color: var(--amber); }
+  .pill-na { background: var(--accent-soft); color: var(--accent); }
+  .pill-va { background: var(--violet-soft); color: var(--violet); }
+  .btn-del { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 6px; display: grid; place-items: center; }
+  .btn-del:active { background: var(--red-soft); color: var(--red); }
+  .btn-del svg { width: 17px; height: 17px; }
+  .entry-egg { font-size: 1.45rem; font-weight: 700; margin-bottom: 10px; }
+  .entry-egg span { font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-left: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 0.74rem; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-muted); padding: 5px 10px; border-radius: 8px; font-weight: 500;
+  }
+  .chip b { color: var(--text); font-weight: 650; }
+  .chip.warn { background: var(--red-soft); border-color: rgba(229,103,90,0.3); color: #EE9389; }
+  .entry-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.45; }
+
+  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); font-weight: 650; margin: 18px 2px 10px; }
+
+  .empty {
+    text-align: center; padding: 48px 20px; color: var(--text-dim);
+  }
+  .empty .ico { font-size: 2.4rem; margin-bottom: 10px; opacity: 0.6; }
+  .empty .t { font-size: 0.92rem; font-weight: 550; color: var(--text-muted); }
+  .empty .s { font-size: 0.82rem; margin-top: 4px; }
+
+  /* ---------- Bottom nav ---------- */
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    background: rgba(22,24,26,0.9);
+    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    border-top: 1px solid var(--border);
+    display: flex; padding: 8px 8px calc(env(safe-area-inset-bottom));
+    max-width: 720px; margin: 0 auto;
+  }
+  .nav button {
+    flex: 1; background: none; border: none; cursor: pointer; color: var(--text-dim);
+    display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 4px;
+    font-family: var(--font); font-size: 0.66rem; font-weight: 600; letter-spacing: 0.01em;
+    transition: color 0.13s; border-radius: 10px;
+  }
+  .nav button svg { width: 23px; height: 23px; stroke-width: 1.9; }
+  .nav button.active { color: var(--accent); }
+  .nav button.active svg { stroke-width: 2.2; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%) translateY(20px);
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+    background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong);
+    padding: 12px 20px; border-radius: 12px; font-size: 0.88rem; font-weight: 550;
+    box-shadow: var(--shadow); opacity: 0; transition: all 0.28s; pointer-events: none;
+    z-index: 100; max-width: 88%; text-align: center; display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok { border-color: var(--accent); }
+  .toast.err { border-color: var(--red); }
+
+  @media (min-width: 560px) {
+    .field-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header">
-    <div>
-      <h1>Hønseri</h1>
-      <div class="subtitle">Dagsregistrering</div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">🥚</div>
+      <div>
+        <h1>Hønseri</h1>
+        <div class="sub">Dagsregistrering</div>
+      </div>
     </div>
-    <div id="today-display" style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);"></div>
+    <div class="date" id="today-display"></div>
   </div>
 
-  <div class="install-hint" id="install-hint">
-    <button class="close-hint" onclick="dismissHint()">×</button>
-    <b>Tips:</b> Legg appen på hjemskjermen — trykk <b>Del</b>-ikonet i Safari og velg <b>«Legg til på Hjem-skjerm»</b>. Da virker den som ein vanleg app, også utan nett.
-  </div>
+  <!-- ===== VIEW: REGISTRER ===== -->
+  <section class="view active" id="view-form">
+    <div class="install-hint" id="install-hint">
+      <button class="close-hint" onclick="dismissHint()">×</button>
+      <b>Tips:</b> Legg appen på hjemskjermen — trykk <b>Del</b> i Safari og vel
+      <b>«Legg til på Hjem-skjerm»</b>. Då virkar han som ein vanleg app, også offline.
+    </div>
 
-  <div class="tab-bar">
-    <div class="tab active" onclick="showTab('form')">Ny registrering</div>
-    <div class="tab" onclick="showTab('log')">Logg</div>
-    <div class="tab" onclick="showTab('stats')">Oversikt</div>
-  </div>
+    <div class="card">
+      <div class="card-title">Kven registrerer</div>
+      <div class="seg">
+        <div class="opt"><input type="radio" name="navn" id="r-la" value="Lars Andreas"><label for="r-la">Lars Andreas</label></div>
+        <div class="opt"><input type="radio" name="navn" id="r-na" value="Inese"><label for="r-na">Inese</label></div>
+        <div class="opt"><input type="radio" name="navn" id="r-va" value="Vasyl"><label for="r-va">Vasyl</label></div>
+      </div>
+    </div>
 
-  <!-- TAB: FORM -->
-  <div id="tab-form">
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Namn <span class="req">*</span></label>
-        <div class="radio-group">
-          <div class="radio-btn"><input type="radio" name="navn" id="r-la" value="Lars Andreas"><label for="r-la">Lars Andreas</label></div>
-          <div class="radio-btn"><input type="radio" name="navn" id="r-na" value="Inese"><label for="r-na">Inese</label></div>
-          <div class="radio-btn"><input type="radio" name="navn" id="r-va" value="Vasyl"><label for="r-va">Vasyl</label></div>
-        </div>
+    <div class="card hero">
+      <div class="hero-label">Antall egg plukka</div>
+      <div class="stepper">
+        <button type="button" onclick="bump('egg',-1)" aria-label="minus">−</button>
+        <input class="hero-input" type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
+        <button type="button" onclick="bump('egg',1)" aria-label="pluss">+</button>
       </div>
+      <div class="hero-sub" id="dato-sub"></div>
+      <input type="hidden" id="dato">
+    </div>
 
-      <div class="form-group">
-        <label>Dato <span class="req">*</span></label>
-        <input type="date" id="dato">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>
+        Brett til gardsbutikk
       </div>
-      <div class="form-group">
-        <label>Antall egg plukka <span class="req">*</span></label>
-        <input type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
+      <div class="field-grid">
+        <div class="field"><label>Store brett</label><input type="number" id="store" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label>Vanlege brett</label><input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label>Kartongar</label><input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label>Klink brett</label><input type="number" id="klink" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
+    </div>
 
-      <div class="section-title">Brett til gardsbutikk</div>
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>
+        Pakking av paller
+      </div>
+      <div class="field-grid">
+        <div class="field"><label>200-paller <span class="unit">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label>228-paller <span class="unit">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
+      </div>
+    </div>
 
-      <div class="form-group">
-        <label>Store brett <span class="req">*</span></label>
-        <input type="number" id="store" min="0" inputmode="numeric" placeholder="0">
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
+        Driftsdata
       </div>
-      <div class="form-group">
-        <label>Vanlege brett <span class="req">*</span></label>
-        <input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0">
+      <div class="field-grid">
+        <div class="field"><label>For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label>Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label>Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
-      <div class="form-group">
-        <label>Kartongar <span class="req">*</span></label>
-        <input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>Klink brett <span class="req">*</span></label>
-        <input type="number" id="klink" min="0" inputmode="numeric" placeholder="0">
-      </div>
-
-      <div class="section-title">Pakking av paller</div>
-
-      <div class="form-group">
-        <label>200-paller (antall)</label>
-        <input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>228-paller (antall)</label>
-        <input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0">
-      </div>
-
-      <div class="section-title">Driftsdata</div>
-
-      <div class="form-group">
-        <label>For på siloen <span class="req">*</span></label>
-        <input type="number" id="for" min="0" inputmode="decimal" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>Vannmålar <span class="req">*</span></label>
-        <input type="number" id="vann" min="0" inputmode="decimal" placeholder="0">
-      </div>
-      <div class="form-group">
-        <label>Døde høner</label>
-        <input type="number" id="dode" min="0" inputmode="numeric" placeholder="0">
-      </div>
-
-      <div class="form-group full">
+      <div class="field full" style="margin-top:12px;">
         <label>Kommentar</label>
         <textarea id="kommentar" placeholder="Ev. merknadar…"></textarea>
       </div>
     </div>
+  </section>
 
-    <button class="btn-submit" onclick="submitForm()">Lagre registrering</button>
+  <div class="submit-wrap" id="submit-wrap">
+    <button class="btn-primary" onclick="submitForm()">Lagre registrering</button>
   </div>
 
-  <!-- TAB: LOG -->
-  <div id="tab-log" style="display:none;">
-    <div class="export-bar">
-      <button class="export-btn primary" onclick="exportExcel()">Eksporter til Excel</button>
-      <button class="export-btn" id="share-btn" onclick="shareExcel()" style="display:none;">Del / send</button>
+  <!-- ===== VIEW: LOGG ===== -->
+  <section class="view" id="view-log">
+    <div class="btn-row">
+      <button class="btn accent" onclick="exportExcel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        Excel
+      </button>
+      <button class="btn" id="share-btn" onclick="shareExcel()" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg>
+        Del / send
+      </button>
     </div>
     <div class="filter-row">
-      <label>Filtrer:</label>
       <select id="filter-person" onchange="renderLog()">
-        <option value="">Alle</option>
+        <option value="">Alle personar</option>
         <option value="Lars Andreas">Lars Andreas</option>
         <option value="Inese">Inese</option>
         <option value="Vasyl">Vasyl</option>
       </select>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Dato</th><th>Namn</th><th>Egg</th><th>Store</th><th>Vanlege</th><th>Kartongar</th><th>Klink</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Døde</th><th>Kommentar</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="log-body"></tbody>
-      </table>
-      <div id="log-empty" class="empty-state" style="display:none;">Ingen registreringar endå.</div>
-    </div>
-  </div>
+    <div id="log-list"></div>
+  </section>
 
-  <!-- TAB: STATS -->
-  <div id="tab-stats" style="display:none;">
-    <div class="stats-row" id="stats-row"></div>
-    <div id="weekly-section"></div>
-  </div>
+  <!-- ===== VIEW: OVERSIKT ===== -->
+  <section class="view" id="view-stats">
+    <div id="stats-content"></div>
+  </section>
+
 </div>
+
+<!-- Bottom nav -->
+<nav class="nav">
+  <button class="active" id="nav-form" onclick="showTab('form')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+    Registrer
+  </button>
+  <button id="nav-log" onclick="showTab('log')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round"/></svg>
+    Logg
+  </button>
+  <button id="nav-stats" onclick="showTab('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18M7 14l3-3 3 3 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Oversikt
+  </button>
+</nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const KEY = 'honseri_entries';
 
-function loadEntries() {
-  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; }
-}
-function saveEntries(arr) {
-  localStorage.setItem(KEY, JSON.stringify(arr));
-}
+function loadEntries() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; } }
+function saveEntries(arr) { localStorage.setItem(KEY, JSON.stringify(arr)); }
 
 function today() {
   const d = new Date();
-  const off = d.getTimezoneOffset();
-  return new Date(d.getTime() - off*60000).toISOString().slice(0, 10);
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
 }
-
 function formatDate(iso) {
   if (!iso) return '';
-  const [y, m, d] = iso.split('-');
+  const [y,m,d] = iso.split('-');
   return `${d}.${m}.${y}`;
+}
+const WEEKDAYS = ['søndag','måndag','tysdag','onsdag','torsdag','fredag','laurdag'];
+function weekday(iso) {
+  const [y,m,d] = iso.split('-').map(Number);
+  return WEEKDAYS[new Date(y, m-1, d).getDay()];
 }
 
 window.onload = function() {
   document.getElementById('dato').value = today();
-  document.getElementById('today-display').textContent = formatDate(today());
+  document.getElementById('today-display').innerHTML =
+    `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
+  document.getElementById('dato-sub').textContent = `for ${formatDate(today())}`;
 
   const last = loadEntries();
   if (last.length > 0) {
-    const lastPerson = last[last.length - 1].navn;
-    const radio = document.querySelector(`input[name="navn"][value="${lastPerson}"]`);
+    const radio = document.querySelector(`input[name="navn"][value="${last[last.length-1].navn}"]`);
     if (radio) radio.checked = true;
   }
 
-  // Show share button only where supported (iPhone Safari supports file share)
-  if (navigator.canShare) {
-    document.getElementById('share-btn').style.display = '';
-  }
+  if (navigator.canShare) document.getElementById('share-btn').style.display = '';
 
-  // Install hint: only on iOS Safari, when not already installed, and not dismissed
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
   if (isIOS && !standalone && !localStorage.getItem('hint_dismissed')) {
     document.getElementById('install-hint').style.display = 'block';
+  } else {
+    document.getElementById('install-hint').style.display = 'none';
   }
 };
 
 function dismissHint() {
   document.getElementById('install-hint').style.display = 'none';
-  localStorage.setItem('hint_dismissed', '1');
+  localStorage.setItem('hint_dismissed','1');
+}
+
+function bump(id, delta) {
+  const el = document.getElementById(id);
+  const v = Math.max(0, (parseInt(el.value || '0', 10) || 0) + delta);
+  el.value = v;
 }
 
 function showTab(tab) {
   ['form','log','stats'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+    document.getElementById('view-'+t).classList.toggle('active', t === tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t === tab);
   });
-  document.querySelectorAll('.tab').forEach((el, i) => {
-    el.classList.toggle('active', ['form','log','stats'][i] === tab);
-  });
+  // submit-knappen høyrer berre til registreringsskjemaet
+  document.getElementById('submit-wrap').style.display = tab === 'form' ? '' : 'none';
   if (tab === 'log') renderLog();
   if (tab === 'stats') renderStats();
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 
 function submitForm() {
   const navn = document.querySelector('input[name="navn"]:checked')?.value;
-  const dato = document.getElementById('dato').value;
-  const egg = document.getElementById('egg').value;
-  const store = document.getElementById('store').value;
-  const vanlige = document.getElementById('vanlige').value;
-  const kartonger = document.getElementById('kartonger').value;
-  const klink = document.getElementById('klink').value;
-  const forVal = document.getElementById('for').value;
-  const vann = document.getElementById('vann').value;
-  const pall200 = document.getElementById('pall200').value;
-  const pall228 = document.getElementById('pall228').value;
-  const dode = document.getElementById('dode').value;
-  const kommentar = document.getElementById('kommentar').value.trim();
+  const get = id => document.getElementById(id).value;
+  const egg = get('egg'), store = get('store'), vanlige = get('vanlige'),
+        kartonger = get('kartonger'), klink = get('klink'),
+        forVal = get('for'), vann = get('vann');
 
-  if (!navn || !dato || egg === '' || store === '' || vanlige === '' || kartonger === '' || klink === '' || forVal === '' || vann === '') {
-    toast('Fyll inn alle obligatoriske felt', true);
-    return;
+  if (!navn) { toast('Vel kven som registrerer', true); return; }
+  if (egg === '' || store === '' || vanlige === '' || kartonger === '' || klink === '' || forVal === '' || vann === '') {
+    toast('Fyll inn egg, brett, for og vatn', true); return;
   }
 
   const entry = {
-    id: Date.now(),
-    navn, dato,
-    egg: +egg, store: +store, vanlige: +vanlige,
-    kartonger: +kartonger, klink: +klink,
-    pall200: pall200 === '' ? 0 : +pall200,
-    pall228: pall228 === '' ? 0 : +pall228,
-    for: +forVal, vann: +vann,
-    dode: dode === '' ? 0 : +dode,
-    kommentar
+    id: Date.now(), navn, dato: get('dato'),
+    egg:+egg, store:+store, vanlige:+vanlige, kartonger:+kartonger, klink:+klink,
+    pall200: get('pall200')==='' ? 0 : +get('pall200'),
+    pall228: get('pall228')==='' ? 0 : +get('pall228'),
+    for:+forVal, vann:+vann,
+    dode: get('dode')==='' ? 0 : +get('dode'),
+    kommentar: get('kommentar').trim()
   };
 
   const entries = loadEntries();
   entries.push(entry);
   saveEntries(entries);
 
-  ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','kommentar'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('dato').value = today();
-
-  toast('Registrering lagra ✓');
+  ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','kommentar']
+    .forEach(id => document.getElementById(id).value = '');
+  toast('Registrering lagra', false, true);
 }
 
-function toast(msg, isError) {
+function toast(msg, isError, isOk) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.style.background = isError ? 'var(--red)' : 'var(--accent)';
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2500);
+  el.textContent = (isOk ? '✓ ' : '') + msg;
+  el.className = 'toast show ' + (isError ? 'err' : isOk ? 'ok' : '');
+  setTimeout(() => el.className = 'toast', 2400);
 }
 
-function badgeClass(navn) {
-  if (navn === 'Lars Andreas') return 'badge-la';
-  if (navn === 'Inese') return 'badge-na';
-  return 'badge-va';
-}
+function pillClass(navn) { return navn === 'Lars Andreas' ? 'pill-la' : navn === 'Inese' ? 'pill-na' : 'pill-va'; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+/* ---------- Logg ---------- */
 function renderLog() {
-  const entries = loadEntries();
   const filter = document.getElementById('filter-person').value;
-  const filtered = filter ? entries.filter(e => e.navn === filter) : entries;
-  const sorted = [...filtered].sort((a, b) => b.dato.localeCompare(a.dato));
+  const entries = loadEntries().filter(e => !filter || e.navn === filter)
+                               .sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id);
+  const list = document.getElementById('log-list');
 
-  const tbody = document.getElementById('log-body');
-  const empty = document.getElementById('log-empty');
-  tbody.innerHTML = '';
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty"><div class="ico">🪹</div><div class="t">Ingen registreringar${filter?' for '+esc(filter):''}</div><div class="s">Registreringane dine dukkar opp her.</div></div>`;
+    return;
+  }
 
-  if (sorted.length === 0) { empty.style.display = ''; return; }
-  empty.style.display = 'none';
-
-  sorted.forEach(e => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="white-space:nowrap;font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
-      <td><span class="badge ${badgeClass(e.navn)}">${e.navn}</span></td>
-      <td><strong>${e.egg}</strong></td>
-      <td>${e.store}</td>
-      <td>${e.vanlige}</td>
-      <td>${e.kartonger}</td>
-      <td>${e.klink}</td>
-      <td>${e.pall200 || 0}</td>
-      <td>${e.pall228 || 0}</td>
-      <td>${e.for}</td>
-      <td>${e.vann}</td>
-      <td>${e.dode || 0}</td>
-      <td style="color:var(--text-muted);font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e.kommentar}">${e.kommentar || '—'}</td>
-      <td><button class="btn-del" onclick="deleteEntry(${e.id})">slett</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  list.innerHTML = entries.map(e => {
+    const butikk = e.store + e.vanlige + e.kartonger + e.klink;
+    const dode = (e.dode||0) > 0 ? `<span class="chip warn">Døde <b>${e.dode}</b></span>` : '';
+    return `<div class="entry">
+      <div class="entry-head">
+        <div class="left">
+          <span class="entry-date">${formatDate(e.dato)}</span>
+          <span class="pill ${pillClass(e.navn)}">${esc(e.navn)}</span>
+        </div>
+        <button class="btn-del" onclick="deleteEntry(${e.id})" aria-label="slett">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="entry-egg">${e.egg} <span>egg</span></div>
+      <div class="chips">
+        <span class="chip">Butikk <b>${butikk}</b></span>
+        <span class="chip">Store <b>${e.store}</b></span>
+        <span class="chip">Vanlege <b>${e.vanlige}</b></span>
+        <span class="chip">Kartong <b>${e.kartonger}</b></span>
+        <span class="chip">Klink <b>${e.klink}</b></span>
+        ${e.pall200?`<span class="chip">200-pall <b>${e.pall200}</b></span>`:''}
+        ${e.pall228?`<span class="chip">228-pall <b>${e.pall228}</b></span>`:''}
+        <span class="chip">For <b>${e.for}</b></span>
+        <span class="chip">Vatn <b>${e.vann}</b></span>
+        ${dode}
+      </div>
+      ${e.kommentar?`<div class="entry-note">${esc(e.kommentar)}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
 function deleteEntry(id) {
   if (!confirm('Slett denne registreringa?')) return;
-  const entries = loadEntries().filter(e => e.id !== id);
-  saveEntries(entries);
+  saveEntries(loadEntries().filter(e => e.id !== id));
   renderLog();
-  toast('Sletta');
-}
-
-/* ---------- Excel-eksport ---------- */
-
-const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Kommentar'];
-
-function entryRow(e) {
-  return [
-    formatDate(e.dato), e.navn, e.egg, e.store, e.vanlige, e.kartonger,
-    e.klink, e.pall200||0, e.pall228||0, e.for, e.vann, e.dode||0, e.kommentar||''
-  ];
-}
-
-function sortedEntries() {
-  return [...loadEntries()].sort((a, b) => a.dato.localeCompare(b.dato));
-}
-
-function buildXlsxBlob() {
-  const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
-  return new Blob([makeXlsx(rows, 'Hønseri')], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
-}
-
-function exportExcel() {
-  if (!loadEntries().length) { toast('Ingen data å eksportere', true); return; }
-  const url = URL.createObjectURL(buildXlsxBlob());
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = exportName();
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast('Excel-fil lasta ned ✓');
-}
-
-async function shareExcel() {
-  if (!loadEntries().length) { toast('Ingen data å dele', true); return; }
-  const file = new File([buildXlsxBlob()], exportName(), {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
-  try {
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Hønseri-logg' });
-    } else {
-      exportExcel();
-    }
-  } catch (err) {
-    if (err && err.name !== 'AbortError') exportExcel();
-  }
-}
-
-function exportName() {
-  return `honseri_logg_${today()}.xlsx`;
-}
-
-/* Minimal XLSX-generator (rein JS, ingen bibliotek).
-   Byggjer ei .xlsx-fil (zip med "store"-metode + CRC32). */
-function makeXlsx(rows, sheetName) {
-  const colName = n => { let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26|0; } return s; };
-  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-  let sheetRows = '';
-  rows.forEach((row, r) => {
-    let cells = '';
-    row.forEach((val, c) => {
-      const ref = colName(c) + (r+1);
-      if (typeof val === 'number' && isFinite(val)) {
-        cells += `<c r="${ref}"><v>${val}</v></c>`;
-      } else {
-        const t = (val === null || val === undefined) ? '' : String(val);
-        cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${esc(t)}</t></is></c>`;
-      }
-    });
-    sheetRows += `<row r="${r+1}">${cells}</row>`;
-  });
-
-  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
-
-  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${esc(sheetName).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
-
-  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
-
-  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-
-  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
-
-  const files = [
-    { name: '[Content_Types].xml', data: contentTypes },
-    { name: '_rels/.rels', data: rootRels },
-    { name: 'xl/workbook.xml', data: workbookXml },
-    { name: 'xl/_rels/workbook.xml.rels', data: workbookRels },
-    { name: 'xl/worksheets/sheet1.xml', data: sheetXml },
-  ];
-  return zipStore(files);
-}
-
-/* CRC32 */
-const CRC_TABLE = (() => {
-  const t = new Uint32Array(256);
-  for (let n=0; n<256; n++) {
-    let c = n;
-    for (let k=0; k<8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-    t[n] = c >>> 0;
-  }
-  return t;
-})();
-function crc32(bytes) {
-  let c = 0xFFFFFFFF;
-  for (let i=0; i<bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
-}
-
-/* Lag ein ZIP med "store" (ingen komprimering) */
-function zipStore(files) {
-  const enc = new TextEncoder();
-  const chunks = [];
-  const central = [];
-  let offset = 0;
-
-  const u16 = n => [n & 0xFF, (n >>> 8) & 0xFF];
-  const u32 = n => [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
-
-  files.forEach(f => {
-    const nameBytes = enc.encode(f.name);
-    const dataBytes = enc.encode(f.data);
-    const crc = crc32(dataBytes);
-    const size = dataBytes.length;
-
-    const local = [].concat(
-      u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
-      u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0)
-    );
-    chunks.push(new Uint8Array(local), nameBytes, dataBytes);
-
-    const cen = [].concat(
-      u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
-      u32(crc), u32(size), u32(size),
-      u16(nameBytes.length), u16(0), u16(0), u16(0), u16(0),
-      u32(0), u32(offset)
-    );
-    central.push(new Uint8Array(cen), nameBytes);
-
-    offset += local.length + nameBytes.length + size;
-  });
-
-  const centralStart = offset;
-  let centralSize = 0;
-  central.forEach(c => centralSize += c.length);
-
-  const end = new Uint8Array([].concat(
-    u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length),
-    u32(centralSize), u32(centralStart), u16(0)
-  ));
-
-  return new Blob([...chunks, ...central, end]);
+  toast('Registrering sletta');
 }
 
 /* ---------- Oversikt ---------- */
-
 function renderStats() {
   const entries = loadEntries();
-  const row = document.getElementById('stats-row');
-  const weekly = document.getElementById('weekly-section');
+  const root = document.getElementById('stats-content');
 
   if (!entries.length) {
-    row.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Ingen data endå.</div>';
-    weekly.innerHTML = '';
+    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">Ingen data enno</div><div class="s">Legg inn registreringar for å sjå statistikk.</div></div>`;
     return;
   }
 
-  const totalEgg = entries.reduce((s, e) => s + e.egg, 0);
+  const totalEgg = entries.reduce((s,e) => s + e.egg, 0);
   const avgEgg = Math.round(totalEgg / entries.length);
-  const lastEntry = [...entries].sort((a, b) => b.dato.localeCompare(a.dato))[0];
+  const totalDode = entries.reduce((s,e) => s + (e.dode||0), 0);
+  const last = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id)[0];
   const days = new Set(entries.map(e => e.dato)).size;
 
-  row.innerHTML = `
-    <div class="stat-box">
-      <div class="s-label">Totalt egg</div>
-      <div class="s-val">${totalEgg.toLocaleString('no')}</div>
-      <div class="s-sub">${days} registreringsdagar</div>
-    </div>
-    <div class="stat-box">
-      <div class="s-label">Snitt per dag</div>
-      <div class="s-val">${avgEgg}</div>
-      <div class="s-sub">egg per registrering</div>
-    </div>
-    <div class="stat-box">
-      <div class="s-label">Siste registrering</div>
-      <div class="s-val" style="font-size:1.1rem;padding-top:0.2rem;">${formatDate(lastEntry.dato)}</div>
-      <div class="s-sub">${lastEntry.egg} egg — ${lastEntry.navn}</div>
-    </div>
-    <div class="stat-box">
-      <div class="s-label">Antal postar</div>
-      <div class="s-val">${entries.length}</div>
-      <div class="s-sub">totalt i databasen</div>
-    </div>
-  `;
+  let html = `<div class="stat-grid">
+    <div class="stat accent"><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">Totalt egg</div><div class="s">${days} registreringsdagar</div></div>
+    <div class="stat"><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">Snitt per registrering</div><div class="s">egg</div></div>
+    <div class="stat"><div class="v sm">${formatDate(last.dato)}</div><div class="l">Siste registrering</div><div class="s">${last.egg} egg — ${esc(last.navn)}</div></div>
+    <div class="stat"><div class="v">${totalDode}</div><div class="l">Døde totalt</div><div class="s">${entries.length} postar</div></div>
+  </div>`;
 
-  const sorted = [...entries].sort((a, b) => b.dato.localeCompare(a.dato)).slice(0, 14);
-  let tableHTML = `
-    <div style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:0.5rem;">
-      <div style="font-size:0.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:0.75rem;">Siste 14 registreringar</div>
-      <div class="table-wrap"><table>
-        <thead><tr>
-          <th>Dato</th><th>Namn</th><th>Egg</th><th>Butikk (store+vanlege+kart.+klink)</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Døde</th>
-        </tr></thead><tbody>
-  `;
-  sorted.forEach(e => {
-    const butikk = e.store + e.vanlige + e.kartonger + e.klink;
-    tableHTML += `<tr>
-      <td style="font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
-      <td><span class="badge ${badgeClass(e.navn)}">${e.navn}</span></td>
-      <td><strong>${e.egg}</strong></td>
-      <td style="font-family:var(--mono);font-size:0.78rem;">${e.store} + ${e.vanlige} + ${e.kartonger} + ${e.klink} = ${butikk}</td>
-      <td>${e.pall200 || 0}</td>
-      <td>${e.pall228 || 0}</td>
-      <td>${e.for}</td>
-      <td>${e.vann}</td>
-      <td>${e.dode || 0}</td>
-    </tr>`;
+  const recent = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id).slice(0, 10);
+  const maxEgg = Math.max(...recent.map(e => e.egg), 1);
+  html += `<div class="section-label">Siste registreringar</div><div class="card" style="padding:14px;">`;
+  recent.forEach((e,i) => {
+    const pct = Math.round(e.egg / maxEgg * 100);
+    html += `<div style="margin-bottom:${i<recent.length-1?'13px':'0'};">
+      <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:5px;">
+        <span style="color:var(--text-muted);">${formatDate(e.dato)} · ${esc(e.navn)}</span>
+        <span style="font-weight:650;">${e.egg}</span>
+      </div>
+      <div style="height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:4px;"></div>
+      </div>
+    </div>`;
   });
-  tableHTML += '</tbody></table></div></div>';
-  weekly.innerHTML = tableHTML;
+  html += `</div>`;
+  root.innerHTML = html;
+}
+
+/* ---------- Excel-eksport ---------- */
+const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Kommentar'];
+function entryRow(e){ return [formatDate(e.dato),e.navn,e.egg,e.store,e.vanlige,e.kartonger,e.klink,e.pall200||0,e.pall228||0,e.for,e.vann,e.dode||0,e.kommentar||'']; }
+function sortedEntries(){ return [...loadEntries()].sort((a,b) => a.dato.localeCompare(b.dato) || a.id - b.id); }
+function buildXlsxBlob(){
+  const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
+  return new Blob([makeXlsx(rows,'Hønseri')], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function exportName(){ return `honseri_logg_${today()}.xlsx`; }
+function exportExcel(){
+  if (!loadEntries().length) { toast('Ingen data å eksportere', true); return; }
+  const url = URL.createObjectURL(buildXlsxBlob());
+  const a = document.createElement('a'); a.href = url; a.download = exportName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Excel-fil lasta ned', false, true);
+}
+async function shareExcel(){
+  if (!loadEntries().length) { toast('Ingen data å dele', true); return; }
+  const file = new File([buildXlsxBlob()], exportName(), {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  try {
+    if (navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file], title:'Hønseri-logg'});
+    else exportExcel();
+  } catch(err){ if (err && err.name !== 'AbortError') exportExcel(); }
+}
+
+/* Minimal XLSX-generator (rein JS, ingen bibliotek) */
+function makeXlsx(rows, sheetName){
+  const colName = n => { let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26|0; } return s; };
+  const x = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  let sheetRows = '';
+  rows.forEach((row,r) => {
+    let cells = '';
+    row.forEach((val,c) => {
+      const ref = colName(c)+(r+1);
+      if (typeof val === 'number' && isFinite(val)) cells += `<c r="${ref}"><v>${val}</v></c>`;
+      else { const t = (val==null)?'':String(val); cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${x(t)}</t></is></c>`; }
+    });
+    sheetRows += `<row r="${r+1}">${cells}</row>`;
+  });
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${x(sheetName).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+  return zipStore([
+    {name:'[Content_Types].xml', data:contentTypes},
+    {name:'_rels/.rels', data:rootRels},
+    {name:'xl/workbook.xml', data:workbookXml},
+    {name:'xl/_rels/workbook.xml.rels', data:workbookRels},
+    {name:'xl/worksheets/sheet1.xml', data:sheetXml},
+  ]);
+}
+const CRC_TABLE = (() => { const t=new Uint32Array(256); for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;} return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_TABLE[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zipStore(files){
+  const enc = new TextEncoder(); const chunks=[]; const central=[]; let offset=0;
+  const u16 = n => [n&0xFF,(n>>>8)&0xFF];
+  const u32 = n => [n&0xFF,(n>>>8)&0xFF,(n>>>16)&0xFF,(n>>>24)&0xFF];
+  files.forEach(f => {
+    const nameBytes = enc.encode(f.name); const dataBytes = enc.encode(f.data);
+    const crc = crc32(dataBytes); const size = dataBytes.length;
+    chunks.push(new Uint8Array([].concat(u32(0x04034b50),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(size),u32(size),u16(nameBytes.length),u16(0))), nameBytes, dataBytes);
+    central.push(new Uint8Array([].concat(u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),u32(crc),u32(size),u32(size),u16(nameBytes.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset))), nameBytes);
+    offset += 30 + nameBytes.length + size;
+  });
+  const centralStart = offset; let centralSize = 0; central.forEach(c => centralSize += c.length);
+  const end = new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(centralSize),u32(centralStart),u16(0)));
+  return new Blob([...chunks, ...central, end]);
 }
 
 /* ---------- Service worker ---------- */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 </script>
 </body>
