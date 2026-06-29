@@ -23,9 +23,9 @@
     --surface-3: #31373C;
     --border: #2D3237;
     --border-strong: #3A4147;
-    --text: #ECEFF1;
-    --text-muted: #9BA3AA;
-    --text-dim: #6B737A;
+    --text: #F3F5F7;
+    --text-muted: #C4CBD1;
+    --text-dim: #8E969D;
     --accent: #7CC36A;
     --accent-press: #6BB158;
     --accent-soft: rgba(124,195,106,0.13);
@@ -99,8 +99,8 @@
     margin-bottom: 14px;
   }
   .card-title {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
-    color: var(--text-dim); font-weight: 650; margin-bottom: 14px;
+    font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); font-weight: 700; margin-bottom: 14px;
     display: flex; align-items: center; gap: 7px;
   }
   .card-title svg { width: 15px; height: 15px; opacity: 0.85; }
@@ -144,7 +144,7 @@
   .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .field { display: flex; flex-direction: column; gap: 7px; }
   .field.full { grid-column: 1 / -1; }
-  .field label { font-size: 0.76rem; color: var(--text-muted); font-weight: 550; }
+  .field label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
   .field .unit { color: var(--text-dim); font-weight: 400; }
   input[type="number"], input[type="date"], input[type="text"], textarea, select {
     width: 100%; background: var(--surface-2); border: 1px solid var(--border-strong);
@@ -288,7 +288,7 @@
       <b>«Legg til på Hjem-skjerm»</b>. Då virkar han som ein vanleg app, også offline.
     </div>
 
-    <div class="card">
+    <div class="card" id="card-person">
       <div class="card-title">Kven registrerer</div>
       <div class="seg">
         <div class="opt"><input type="radio" name="navn" id="r-la" value="Lars Andreas"><label for="r-la">Lars Andreas</label></div>
@@ -297,18 +297,18 @@
       </div>
     </div>
 
-    <div class="card hero">
+    <div class="card hero" id="card-egg">
       <div class="hero-label">Antall egg plukka</div>
       <div class="stepper">
-        <button type="button" onclick="bump('egg',-1)" aria-label="minus">−</button>
+        <button type="button" onclick="bump('egg',-30)" aria-label="minus">−</button>
         <input class="hero-input" type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
-        <button type="button" onclick="bump('egg',1)" aria-label="pluss">+</button>
+        <button type="button" onclick="bump('egg',30)" aria-label="pluss">+</button>
       </div>
       <div class="hero-sub" id="dato-sub"></div>
       <input type="hidden" id="dato">
     </div>
 
-    <div class="card">
+    <div class="card" id="card-brett">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>
         Brett til gardsbutikk
@@ -321,7 +321,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="card-paller">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>
         Pakking av paller
@@ -332,7 +332,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="card-drift">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
         Driftsdata
@@ -429,10 +429,16 @@ window.onload = function() {
   document.getElementById('dato-sub').textContent = `for ${formatDate(today())}`;
 
   const last = loadEntries();
-  if (last.length > 0) {
+  if (last.length > 0 && last[last.length-1].navn) {
     const radio = document.querySelector(`input[name="navn"][value="${last[last.length-1].navn}"]`);
     if (radio) radio.checked = true;
   }
+
+  // Tilpass rekkjefølgja på skjemaet etter kven som registrerer
+  document.querySelectorAll('input[name="navn"]').forEach(r =>
+    r.addEventListener('change', () => reorderForm(r.value)));
+  const checked = document.querySelector('input[name="navn"]:checked');
+  reorderForm(checked ? checked.value : '');
 
   if (navigator.canShare) document.getElementById('share-btn').style.display = '';
 
@@ -456,6 +462,19 @@ function bump(id, delta) {
   el.value = v;
 }
 
+// Vasyl pakkar paller → løft paller-seksjonen øvst. Egg-plukkarane får paller til slutt.
+const FORM_ORDER = {
+  'Vasyl':   ['card-person','card-paller','card-egg','card-brett','card-drift'],
+  'default': ['card-person','card-egg','card-brett','card-drift','card-paller']
+};
+function reorderForm(navn) {
+  const view = document.getElementById('view-form');
+  (FORM_ORDER[navn] || FORM_ORDER['default']).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) view.appendChild(el);
+  });
+}
+
 function showTab(tab) {
   ['form','log','stats'].forEach(t => {
     document.getElementById('view-'+t).classList.toggle('active', t === tab);
@@ -473,9 +492,10 @@ function submitForm() {
   const get = id => document.getElementById(id).value;
   const num = id => { const v = get(id); return v === '' ? 0 : +v; };
 
-  // Berre antall egg er obligatorisk
-  if (get('egg') === '') {
-    toast('Fyll inn antall egg', true); return;
+  // Ingen einskildfelt er påkravd, men registreringa kan ikkje vere heilt tom
+  const numIds = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode'];
+  if (!numIds.some(id => num(id) > 0)) {
+    toast('Fyll inn minst eitt felt', true); return;
   }
 
   const entry = {
