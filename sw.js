@@ -1,6 +1,6 @@
 /* Service worker for Hønseri-appen.
    Cache-first slik at appen virkar offline når den er lagt på hjemskjermen. */
-const CACHE = 'honseri-v4';
+const CACHE = 'honseri-v5';
 const ASSETS = [
   './',
   './index.html',

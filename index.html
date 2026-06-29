@@ -274,7 +274,7 @@
       <div class="logo">🥚</div>
       <div>
         <h1>Hønseri</h1>
-        <div class="sub">Dagsregistrering</div>
+        <div class="sub" data-i18n="subtitle">Dagsregistrering</div>
       </div>
     </div>
     <div class="date" id="today-display"></div>
@@ -289,7 +289,7 @@
     </div>
 
     <div class="card" id="card-person">
-      <div class="card-title">Kven registrerer</div>
+      <div class="card-title" data-i18n="t_person">Kven registrerer</div>
       <div class="seg">
         <div class="opt"><input type="radio" name="navn" id="r-la" value="Lars Andreas"><label for="r-la">Lars Andreas</label></div>
         <div class="opt"><input type="radio" name="navn" id="r-na" value="Inese"><label for="r-na">Inese</label></div>
@@ -298,7 +298,7 @@
     </div>
 
     <div class="card hero" id="card-egg">
-      <div class="hero-label">Antall egg plukka</div>
+      <div class="hero-label" data-i18n="t_egg">Antall egg plukka</div>
       <div class="stepper">
         <button type="button" onclick="bump('egg',-30)" aria-label="minus">−</button>
         <input class="hero-input" type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
@@ -311,46 +311,46 @@
     <div class="card" id="card-brett">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>
-        Brett til gardsbutikk
+        <span data-i18n="t_brett">Brett til gardsbutikk</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label>Store brett</label><input type="number" id="store" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label>Vanlege brett</label><input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label>Kartongar</label><input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label>Klink brett</label><input type="number" id="klink" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_store">Store brett</label><input type="number" id="store" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_vanlige">Vanlege brett</label><input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_kartonger">Kartongar</label><input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_klink">Klink brett</label><input type="number" id="klink" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
     </div>
 
     <div class="card" id="card-paller">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>
-        Pakking av paller
+        <span data-i18n="t_paller">Pakking av paller</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label>200-paller <span class="unit">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label>228-paller <span class="unit">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label><span data-i18n="l_pall200">200-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label><span data-i18n="l_pall228">228-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
     </div>
 
     <div class="card" id="card-drift">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
-        Driftsdata
+        <span data-i18n="t_drift">Driftsdata</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label>For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label>Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label>Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_for">For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_vann">Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label data-i18n="l_dode">Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
       <div class="field full" style="margin-top:12px;">
-        <label>Kommentar</label>
-        <textarea id="kommentar" placeholder="Ev. merknadar…"></textarea>
+        <label data-i18n="l_kommentar">Kommentar</label>
+        <textarea id="kommentar" data-i18n-ph="ph_kommentar" placeholder="Ev. merknadar…"></textarea>
       </div>
     </div>
   </section>
 
   <div class="submit-wrap" id="submit-wrap">
-    <button class="btn-primary" onclick="submitForm()">Lagre registrering</button>
+    <button class="btn-primary" onclick="submitForm()" data-i18n="btn_save">Lagre registrering</button>
   </div>
 
   <!-- ===== VIEW: LOGG ===== -->
@@ -358,16 +358,16 @@
     <div class="btn-row">
       <button class="btn accent" onclick="exportExcel()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
-        Excel
+        <span data-i18n="btn_excel">Excel</span>
       </button>
       <button class="btn" id="share-btn" onclick="shareExcel()" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg>
-        Del / send
+        <span data-i18n="btn_share">Del / send</span>
       </button>
     </div>
     <div class="filter-row">
       <select id="filter-person" onchange="renderLog()">
-        <option value="">Alle personar</option>
+        <option value="" data-i18n="opt_all">Alle personar</option>
         <option value="Lars Andreas">Lars Andreas</option>
         <option value="Inese">Inese</option>
         <option value="Vasyl">Vasyl</option>
@@ -387,15 +387,15 @@
 <nav class="nav">
   <button class="active" id="nav-form" onclick="showTab('form')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
-    Registrer
+    <span data-i18n="nav_form">Registrer</span>
   </button>
   <button id="nav-log" onclick="showTab('log')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round"/></svg>
-    Logg
+    <span data-i18n="nav_log">Logg</span>
   </button>
   <button id="nav-stats" onclick="showTab('stats')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18M7 14l3-3 3 3 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Oversikt
+    <span data-i18n="nav_stats">Oversikt</span>
   </button>
 </nav>
 
@@ -416,17 +416,82 @@ function formatDate(iso) {
   const [y,m,d] = iso.split('-');
   return `${d}.${m}.${y}`;
 }
-const WEEKDAYS = ['søndag','måndag','tysdag','onsdag','torsdag','fredag','laurdag'];
+/* ---------- Språk (norsk / ukrainsk) ---------- */
+const I18N = {
+  no: {
+    subtitle:'Dagsregistrering', t_person:'Kven registrerer', t_egg:'Antall egg plukka',
+    t_brett:'Brett til gardsbutikk', t_paller:'Pakking av paller', t_drift:'Driftsdata',
+    l_store:'Store brett', l_vanlige:'Vanlege brett', l_kartonger:'Kartongar', l_klink:'Klink brett',
+    l_pall200:'200-paller', l_pall228:'228-paller', u_stk:'stk',
+    l_for:'For på siloen', l_vann:'Vannmålar', l_dode:'Døde høner',
+    l_kommentar:'Kommentar', ph_kommentar:'Ev. merknadar…', btn_save:'Lagre registrering',
+    btn_excel:'Excel', btn_share:'Del / send', opt_all:'Alle personar',
+    nav_form:'Registrer', nav_log:'Logg', nav_stats:'Oversikt',
+    for_prefix:'for ', toast_minst:'Fyll inn minst eitt felt', toast_saved:'Registrering lagra',
+    toast_deleted:'Registrering sletta', toast_noexp:'Ingen data å eksportere',
+    toast_noshare:'Ingen data å dele', toast_excel:'Excel-fil lasta ned',
+    confirm_del:'Slett denne registreringa?',
+    egg_unit:'egg', c_butikk:'Butikk', c_store:'Store', c_vanlege:'Vanlege', c_kartong:'Kartong',
+    c_klink:'Klink', c_200:'200-pall', c_228:'228-pall', c_for:'For', c_vatn:'Vatn', c_dode:'Døde',
+    empty_log_t:'Ingen registreringar', empty_log_for:' for ',
+    empty_log_s:'Registreringane dine dukkar opp her.',
+    empty_stats_t:'Ingen data enno', empty_stats_s:'Legg inn registreringar for å sjå statistikk.',
+    s_total_egg:'Totalt egg', s_days:'registreringsdagar', s_avg:'Snitt per registrering', s_egg:'egg',
+    s_last:'Siste registrering', s_dode_total:'Døde totalt', s_posts:'postar', s_recent:'Siste registreringar'
+  },
+  uk: {
+    subtitle:'Щоденний облік', t_person:'Хто реєструє', t_egg:'Зібрано яєць',
+    t_brett:'Лотки для магазину', t_paller:'Пакування палет', t_drift:'Виробничі дані',
+    l_store:'Великі лотки', l_vanlige:'Звичайні лотки', l_kartonger:'Картонки', l_klink:'Лотки клінк',
+    l_pall200:'200-палети', l_pall228:'228-палети', u_stk:'шт',
+    l_for:'Корм у силосі', l_vann:'Лічильник води', l_dode:'Загиблі кури',
+    l_kommentar:'Коментар', ph_kommentar:'Примітки…', btn_save:'Зберегти запис',
+    btn_excel:'Excel', btn_share:'Поділитися', opt_all:'Усі',
+    nav_form:'Реєстрація', nav_log:'Журнал', nav_stats:'Огляд',
+    for_prefix:'за ', toast_minst:'Заповніть хоча б одне поле', toast_saved:'Запис збережено',
+    toast_deleted:'Запис видалено', toast_noexp:'Немає даних для експорту',
+    toast_noshare:'Немає даних для надсилання', toast_excel:'Файл Excel завантажено',
+    confirm_del:'Видалити цей запис?',
+    egg_unit:'яєць', c_butikk:'Магазин', c_store:'Великі', c_vanlege:'Звичайні', c_kartong:'Картон',
+    c_klink:'Клінк', c_200:'200-пал.', c_228:'228-пал.', c_for:'Корм', c_vatn:'Вода', c_dode:'Загиблі',
+    empty_log_t:'Немає записів', empty_log_for:' для ',
+    empty_log_s:'Ваші записи зʼявлятимуться тут.',
+    empty_stats_t:'Поки немає даних', empty_stats_s:'Додайте записи, щоб побачити статистику.',
+    s_total_egg:'Усього яєць', s_days:'днів обліку', s_avg:'Середнє за запис', s_egg:'яєць',
+    s_last:'Останній запис', s_dode_total:'Усього загиблих', s_posts:'записів', s_recent:'Останні записи'
+  }
+};
+let LANG = 'no';
+function t(k){ const v = I18N[LANG] && I18N[LANG][k]; return v != null ? v : (I18N.no[k] != null ? I18N.no[k] : k); }
+
+const WEEKDAYS = {
+  no: ['søndag','måndag','tysdag','onsdag','torsdag','fredag','laurdag'],
+  uk: ['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота']
+};
 function weekday(iso) {
   const [y,m,d] = iso.split('-').map(Number);
-  return WEEKDAYS[new Date(y, m-1, d).getDay()];
+  return (WEEKDAYS[LANG] || WEEKDAYS.no)[new Date(y, m-1, d).getDay()];
+}
+
+function langFor(navn){ return navn === 'Vasyl' ? 'uk' : 'no'; }
+function updateDateDisplay(){
+  const td = document.getElementById('today-display');
+  if (td) td.innerHTML = `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
+  const ds = document.getElementById('dato-sub');
+  if (ds) ds.textContent = `${t('for_prefix')}${formatDate(today())}`;
+}
+function applyLang(lang){
+  LANG = lang === 'uk' ? 'uk' : 'no';
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.getAttribute('data-i18n-ph')));
+  updateDateDisplay();
+  if (document.getElementById('view-log').classList.contains('active')) renderLog();
+  if (document.getElementById('view-stats').classList.contains('active')) renderStats();
 }
 
 window.onload = function() {
   document.getElementById('dato').value = today();
-  document.getElementById('today-display').innerHTML =
-    `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
-  document.getElementById('dato-sub').textContent = `for ${formatDate(today())}`;
 
   const last = loadEntries();
   if (last.length > 0 && last[last.length-1].navn) {
@@ -434,11 +499,12 @@ window.onload = function() {
     if (radio) radio.checked = true;
   }
 
-  // Tilpass rekkjefølgja på skjemaet etter kven som registrerer
+  // Tilpass rekkjefølgja og språket på skjemaet etter kven som registrerer
   document.querySelectorAll('input[name="navn"]').forEach(r =>
-    r.addEventListener('change', () => reorderForm(r.value)));
+    r.addEventListener('change', () => { reorderForm(r.value); applyLang(langFor(r.value)); }));
   const checked = document.querySelector('input[name="navn"]:checked');
   reorderForm(checked ? checked.value : '');
+  applyLang(langFor(checked ? checked.value : ''));
 
   if (navigator.canShare) document.getElementById('share-btn').style.display = '';
 
@@ -495,7 +561,7 @@ function submitForm() {
   // Ingen einskildfelt er påkravd, men registreringa kan ikkje vere heilt tom
   const numIds = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode'];
   if (!numIds.some(id => num(id) > 0)) {
-    toast('Fyll inn minst eitt felt', true); return;
+    toast(t('toast_minst'), true); return;
   }
 
   const entry = {
@@ -513,7 +579,7 @@ function submitForm() {
 
   ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','kommentar']
     .forEach(id => document.getElementById(id).value = '');
-  toast('Registrering lagra', false, true);
+  toast(t('toast_saved'), false, true);
 }
 
 function toast(msg, isError, isOk) {
@@ -534,13 +600,13 @@ function renderLog() {
   const list = document.getElementById('log-list');
 
   if (!entries.length) {
-    list.innerHTML = `<div class="empty"><div class="ico">🪹</div><div class="t">Ingen registreringar${filter?' for '+esc(filter):''}</div><div class="s">Registreringane dine dukkar opp her.</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="ico">🪹</div><div class="t">${t('empty_log_t')}${filter?t('empty_log_for')+esc(filter):''}</div><div class="s">${t('empty_log_s')}</div></div>`;
     return;
   }
 
   list.innerHTML = entries.map(e => {
     const butikk = e.store + e.vanlige + e.kartonger + e.klink;
-    const dode = (e.dode||0) > 0 ? `<span class="chip warn">Døde <b>${e.dode}</b></span>` : '';
+    const dode = (e.dode||0) > 0 ? `<span class="chip warn">${t('c_dode')} <b>${e.dode}</b></span>` : '';
     return `<div class="entry">
       <div class="entry-head">
         <div class="left">
@@ -551,17 +617,17 @@ function renderLog() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
-      <div class="entry-egg">${e.egg} <span>egg</span></div>
+      <div class="entry-egg">${e.egg} <span>${t('egg_unit')}</span></div>
       <div class="chips">
-        <span class="chip">Butikk <b>${butikk}</b></span>
-        <span class="chip">Store <b>${e.store}</b></span>
-        <span class="chip">Vanlege <b>${e.vanlige}</b></span>
-        <span class="chip">Kartong <b>${e.kartonger}</b></span>
-        <span class="chip">Klink <b>${e.klink}</b></span>
-        ${e.pall200?`<span class="chip">200-pall <b>${e.pall200}</b></span>`:''}
-        ${e.pall228?`<span class="chip">228-pall <b>${e.pall228}</b></span>`:''}
-        <span class="chip">For <b>${e.for}</b></span>
-        <span class="chip">Vatn <b>${e.vann}</b></span>
+        <span class="chip">${t('c_butikk')} <b>${butikk}</b></span>
+        <span class="chip">${t('c_store')} <b>${e.store}</b></span>
+        <span class="chip">${t('c_vanlege')} <b>${e.vanlige}</b></span>
+        <span class="chip">${t('c_kartong')} <b>${e.kartonger}</b></span>
+        <span class="chip">${t('c_klink')} <b>${e.klink}</b></span>
+        ${e.pall200?`<span class="chip">${t('c_200')} <b>${e.pall200}</b></span>`:''}
+        ${e.pall228?`<span class="chip">${t('c_228')} <b>${e.pall228}</b></span>`:''}
+        <span class="chip">${t('c_for')} <b>${e.for}</b></span>
+        <span class="chip">${t('c_vatn')} <b>${e.vann}</b></span>
         ${dode}
       </div>
       ${e.kommentar?`<div class="entry-note">${esc(e.kommentar)}</div>`:''}
@@ -570,10 +636,10 @@ function renderLog() {
 }
 
 function deleteEntry(id) {
-  if (!confirm('Slett denne registreringa?')) return;
+  if (!confirm(t('confirm_del'))) return;
   saveEntries(loadEntries().filter(e => e.id !== id));
   renderLog();
-  toast('Registrering sletta');
+  toast(t('toast_deleted'));
 }
 
 /* ---------- Oversikt ---------- */
@@ -582,7 +648,7 @@ function renderStats() {
   const root = document.getElementById('stats-content');
 
   if (!entries.length) {
-    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">Ingen data enno</div><div class="s">Legg inn registreringar for å sjå statistikk.</div></div>`;
+    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">${t('empty_stats_t')}</div><div class="s">${t('empty_stats_s')}</div></div>`;
     return;
   }
 
@@ -593,15 +659,15 @@ function renderStats() {
   const days = new Set(entries.map(e => e.dato)).size;
 
   let html = `<div class="stat-grid">
-    <div class="stat accent"><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">Totalt egg</div><div class="s">${days} registreringsdagar</div></div>
-    <div class="stat"><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">Snitt per registrering</div><div class="s">egg</div></div>
-    <div class="stat"><div class="v sm">${formatDate(last.dato)}</div><div class="l">Siste registrering</div><div class="s">${last.egg} egg — ${esc(last.navn)}</div></div>
-    <div class="stat"><div class="v">${totalDode}</div><div class="l">Døde totalt</div><div class="s">${entries.length} postar</div></div>
+    <div class="stat accent"><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">${t('s_total_egg')}</div><div class="s">${days} ${t('s_days')}</div></div>
+    <div class="stat"><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">${t('s_avg')}</div><div class="s">${t('s_egg')}</div></div>
+    <div class="stat"><div class="v sm">${formatDate(last.dato)}</div><div class="l">${t('s_last')}</div><div class="s">${last.egg} ${t('s_egg')} — ${esc(last.navn)}</div></div>
+    <div class="stat"><div class="v">${totalDode}</div><div class="l">${t('s_dode_total')}</div><div class="s">${entries.length} ${t('s_posts')}</div></div>
   </div>`;
 
   const recent = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id).slice(0, 10);
   const maxEgg = Math.max(...recent.map(e => e.egg), 1);
-  html += `<div class="section-label">Siste registreringar</div><div class="card" style="padding:14px;">`;
+  html += `<div class="section-label">${t('s_recent')}</div><div class="card" style="padding:14px;">`;
   recent.forEach((e,i) => {
     const pct = Math.round(e.egg / maxEgg * 100);
     html += `<div style="margin-bottom:${i<recent.length-1?'13px':'0'};">
@@ -628,15 +694,15 @@ function buildXlsxBlob(){
 }
 function exportName(){ return `honseri_logg_${today()}.xlsx`; }
 function exportExcel(){
-  if (!loadEntries().length) { toast('Ingen data å eksportere', true); return; }
+  if (!loadEntries().length) { toast(t('toast_noexp'), true); return; }
   const url = URL.createObjectURL(buildXlsxBlob());
   const a = document.createElement('a'); a.href = url; a.download = exportName();
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast('Excel-fil lasta ned', false, true);
+  toast(t('toast_excel'), false, true);
 }
 async function shareExcel(){
-  if (!loadEntries().length) { toast('Ingen data å dele', true); return; }
+  if (!loadEntries().length) { toast(t('toast_noshare'), true); return; }
   const file = new File([buildXlsxBlob()], exportName(), {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   try {
     if (navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file], title:'Hønseri-logg'});
