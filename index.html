@@ -469,24 +469,21 @@ function showTab(tab) {
 }
 
 function submitForm() {
-  const navn = document.querySelector('input[name="navn"]:checked')?.value;
+  const navn = document.querySelector('input[name="navn"]:checked')?.value || '';
   const get = id => document.getElementById(id).value;
-  const egg = get('egg'), store = get('store'), vanlige = get('vanlige'),
-        kartonger = get('kartonger'), klink = get('klink'),
-        forVal = get('for'), vann = get('vann');
+  const num = id => { const v = get(id); return v === '' ? 0 : +v; };
 
-  if (!navn) { toast('Vel kven som registrerer', true); return; }
-  if (egg === '' || store === '' || vanlige === '' || kartonger === '' || klink === '' || forVal === '' || vann === '') {
-    toast('Fyll inn egg, brett, for og vatn', true); return;
+  // Berre antall egg er obligatorisk
+  if (get('egg') === '') {
+    toast('Fyll inn antall egg', true); return;
   }
 
   const entry = {
     id: Date.now(), navn, dato: get('dato'),
-    egg:+egg, store:+store, vanlige:+vanlige, kartonger:+kartonger, klink:+klink,
-    pall200: get('pall200')==='' ? 0 : +get('pall200'),
-    pall228: get('pall228')==='' ? 0 : +get('pall228'),
-    for:+forVal, vann:+vann,
-    dode: get('dode')==='' ? 0 : +get('dode'),
+    egg:+get('egg'), store:num('store'), vanlige:num('vanlige'),
+    kartonger:num('kartonger'), klink:num('klink'),
+    pall200:num('pall200'), pall228:num('pall228'),
+    for:num('for'), vann:num('vann'), dode:num('dode'),
     kommentar: get('kommentar').trim()
   };
 
