@@ -35,6 +35,8 @@
     --red-soft: rgba(229,103,90,0.13);
     --violet: #9B8CE0;
     --violet-soft: rgba(155,140,224,0.14);
+    --teal: #5FBFC9;
+    --teal-soft: rgba(95,191,201,0.14);
     --radius: 14px;
     --radius-sm: 10px;
     --shadow: 0 4px 18px rgba(0,0,0,0.35);
@@ -181,24 +183,46 @@
   /* ---------- Stats ---------- */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .stat {
+    position: relative; overflow: hidden;
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 16px;
   }
+  .stat .ico { position: absolute; top: 13px; right: 13px; width: 19px; height: 19px; opacity: 0.9; }
+  .stat .ico svg { width: 100%; height: 100%; }
   .stat .v { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; }
   .stat .v.sm { font-size: 1.2rem; }
-  .stat .l { font-size: 0.72rem; color: var(--text-muted); font-weight: 550; margin-top: 4px; }
+  .stat .l { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
   .stat .s { font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; }
-  .stat.accent .v { color: var(--accent); }
+  /* Fargetonede metrikk-kort (inspirert av Tidely) */
+  .stat.t-green { background: linear-gradient(155deg, var(--accent-soft), transparent 72%), var(--surface); border-color: rgba(124,195,106,0.28); }
+  .stat.t-green .v, .stat.t-green .ico { color: var(--accent); }
+  .stat.t-teal  { background: linear-gradient(155deg, var(--teal-soft), transparent 72%), var(--surface); border-color: rgba(95,191,201,0.28); }
+  .stat.t-teal .v, .stat.t-teal .ico { color: var(--teal); }
+  .stat.t-amber { background: linear-gradient(155deg, var(--amber-soft), transparent 72%), var(--surface); border-color: rgba(227,164,69,0.28); }
+  .stat.t-amber .v, .stat.t-amber .ico { color: var(--amber); }
+  .stat.t-red   { background: linear-gradient(155deg, var(--red-soft), transparent 72%), var(--surface); border-color: rgba(229,103,90,0.28); }
+  .stat.t-red .v, .stat.t-red .ico { color: var(--red); }
 
   /* ---------- Log list ---------- */
   .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .filter-row select { width: auto; flex: 1; padding: 10px 12px; font-size: 0.9rem; }
   .entry {
+    position: relative;
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 14px; margin-bottom: 10px;
   }
+  /* Dagens registrering uthevast (inspirert av «Now»-kolonna i Tidely) */
+  .entry.today {
+    border-color: rgba(124,195,106,0.45);
+    background: linear-gradient(158deg, var(--accent-soft), transparent 55%), var(--surface);
+  }
+  .entry.today::before {
+    content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+    background: var(--accent); border-radius: 0 3px 3px 0;
+  }
+  .badge-today { font-size: 0.64rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 20px; letter-spacing: 0.02em; }
   .entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
-  .entry-head .left { display: flex; align-items: center; gap: 10px; }
+  .entry-head .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .entry-date { font-size: 0.92rem; font-weight: 650; }
   .pill { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
   .pill-la { background: var(--amber-soft); color: var(--amber); }
@@ -218,7 +242,9 @@
   .chip.warn { background: var(--red-soft); border-color: rgba(229,103,90,0.3); color: #EE9389; }
   .entry-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.45; }
 
-  .section-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); font-weight: 650; margin: 18px 2px 10px; }
+  .section-label { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 700; margin: 20px 2px 11px; }
+  .section-label::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; box-shadow: 0 0 7px rgba(124,195,106,0.6); }
+  .section-label .hint { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-dim); }
 
   .empty {
     text-align: center; padding: 48px 20px; color: var(--text-dim);
@@ -437,7 +463,8 @@ const I18N = {
     empty_log_s:'Registreringane dine dukkar opp her.',
     empty_stats_t:'Ingen data enno', empty_stats_s:'Legg inn registreringar for å sjå statistikk.',
     s_total_egg:'Totalt egg', s_days:'registreringsdagar', s_avg:'Snitt per registrering', s_egg:'egg',
-    s_last:'Siste registrering', s_dode_total:'Døde totalt', s_posts:'postar', s_recent:'Siste registreringar'
+    s_last:'Siste registrering', s_dode_total:'Døde totalt', s_posts:'postar', s_recent:'Siste registreringar',
+    s_recent_hint:'siste 10', today_badge:'I dag'
   },
   uk: {
     subtitle:'Щоденний облік', t_person:'Хто реєструє', t_egg:'Зібрано яєць',
@@ -458,7 +485,8 @@ const I18N = {
     empty_log_s:'Ваші записи зʼявлятимуться тут.',
     empty_stats_t:'Поки немає даних', empty_stats_s:'Додайте записи, щоб побачити статистику.',
     s_total_egg:'Усього яєць', s_days:'днів обліку', s_avg:'Середнє за запис', s_egg:'яєць',
-    s_last:'Останній запис', s_dode_total:'Усього загиблих', s_posts:'записів', s_recent:'Останні записи'
+    s_last:'Останній запис', s_dode_total:'Усього загиблих', s_posts:'записів', s_recent:'Останні записи',
+    s_recent_hint:'останні 10', today_badge:'Сьогодні'
   }
 };
 let LANG = 'no';
@@ -607,10 +635,12 @@ function renderLog() {
   list.innerHTML = entries.map(e => {
     const butikk = e.store + e.vanlige + e.kartonger + e.klink;
     const dode = (e.dode||0) > 0 ? `<span class="chip warn">${t('c_dode')} <b>${e.dode}</b></span>` : '';
-    return `<div class="entry">
+    const isToday = e.dato === today();
+    return `<div class="entry${isToday?' today':''}">
       <div class="entry-head">
         <div class="left">
           <span class="entry-date">${formatDate(e.dato)}</span>
+          ${isToday?`<span class="badge-today">${t('today_badge')}</span>`:''}
           <span class="pill ${pillClass(e.navn)}">${esc(e.navn)}</span>
         </div>
         <button class="btn-del" onclick="deleteEntry(${e.id})" aria-label="slett">
@@ -658,25 +688,35 @@ function renderStats() {
   const last = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id)[0];
   const days = new Set(entries.map(e => e.dato)).size;
 
+  const ICO = {
+    egg:  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.5 2 5.5 8 5.5 13a6.5 6.5 0 0 0 13 0C18.5 8 15.5 2 12 2z"/></svg>',
+    avg:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3v18h18M7 14l3-3 3 3 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    dead: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z" stroke-linejoin="round"/><path d="M9 11l2 2M11 11l-2 2M15 11l2 2M17 11l-2 2" stroke-linecap="round"/></svg>'
+  };
   let html = `<div class="stat-grid">
-    <div class="stat accent"><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">${t('s_total_egg')}</div><div class="s">${days} ${t('s_days')}</div></div>
-    <div class="stat"><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">${t('s_avg')}</div><div class="s">${t('s_egg')}</div></div>
-    <div class="stat"><div class="v sm">${formatDate(last.dato)}</div><div class="l">${t('s_last')}</div><div class="s">${last.egg} ${t('s_egg')} — ${esc(last.navn)}</div></div>
-    <div class="stat"><div class="v">${totalDode}</div><div class="l">${t('s_dode_total')}</div><div class="s">${entries.length} ${t('s_posts')}</div></div>
+    <div class="stat t-green"><div class="ico">${ICO.egg}</div><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">${t('s_total_egg')}</div><div class="s">${days} ${t('s_days')}</div></div>
+    <div class="stat t-teal"><div class="ico">${ICO.avg}</div><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">${t('s_avg')}</div><div class="s">${t('s_egg')}</div></div>
+    <div class="stat t-amber"><div class="ico">${ICO.clock}</div><div class="v sm">${formatDate(last.dato)}</div><div class="l">${t('s_last')}</div><div class="s">${last.egg} ${t('s_egg')} — ${esc(last.navn)}</div></div>
+    <div class="stat t-red"><div class="ico">${ICO.dead}</div><div class="v">${totalDode}</div><div class="l">${t('s_dode_total')}</div><div class="s">${entries.length} ${t('s_posts')}</div></div>
   </div>`;
 
   const recent = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id).slice(0, 10);
   const maxEgg = Math.max(...recent.map(e => e.egg), 1);
-  html += `<div class="section-label">${t('s_recent')}</div><div class="card" style="padding:14px;">`;
+  html += `<div class="section-label">${t('s_recent')}<span class="hint">${t('s_recent_hint')}</span></div><div class="card" style="padding:14px;">`;
   recent.forEach((e,i) => {
     const pct = Math.round(e.egg / maxEgg * 100);
+    const isToday = e.dato === today();
+    const grad = isToday
+      ? 'linear-gradient(90deg, var(--accent), #A6D977)'
+      : 'linear-gradient(90deg, var(--teal), var(--accent))';
     html += `<div style="margin-bottom:${i<recent.length-1?'13px':'0'};">
       <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:5px;">
         <span style="color:var(--text-muted);">${formatDate(e.dato)} · ${esc(e.navn)}</span>
-        <span style="font-weight:650;">${e.egg}</span>
+        <span style="font-weight:700;color:${isToday?'var(--accent)':'var(--text)'};">${e.egg}</span>
       </div>
-      <div style="height:7px;background:var(--surface-2);border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:4px;"></div>
+      <div style="height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${grad};border-radius:5px;"></div>
       </div>
     </div>`;
   });
