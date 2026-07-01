@@ -6,14 +6,22 @@ fungerer også **utan nett**. All data ligg lokalt på telefonen din.
 
 ## Funksjonar
 
-- **Ny registrering** — namn (Lars Andreas / Inese / Vasyl), dato, antall egg,
-  brett til gardsbutikk (store, vanlege, kartongar, klink), pakking av paller
-  (200/228), fôr på silo, vannmålar, døde høner og kommentar.
-- **Logg** — alle registreringar i tabell, med filter på person og sletting.
-- **Oversikt** — totalt egg, snitt per dag, siste registrering, og dei 14 siste.
-- **Eksporter til Excel** — lastar ned ei ekte `.xlsx`-fil.
+- **Ny registrering** — namn (Lars Andreas / Inese / Vasyl), dato (med
+  etterregistrering — vald dato som ikkje er i dag markerast tydeleg),
+  antall egg (teljar i steg på 30), brett til gardsbutikk, pakking av paller
+  (200/228), fôr på silo, vannmålar, døde høner og kommentar. Berre minst
+  eitt felt må fyllast ut.
+- **Fleirspråkleg** — grensesnittet byter automatisk språk etter kven som
+  registrerer: norsk (Lars Andreas), latvisk (Inese), ukrainsk (Vasyl).
+  Skjemaet tilpassar seg òg: paller-seksjonen ligg øvst for Vasyl.
+- **Logg** — kvar registrering som kort med fargekoda personmerke, dagens
+  post utheva. Registreringar kan **redigerast** og **slettast med angre**.
+- **Oversikt** — fargetona nøkkeltal-kort og søylevisning av dei siste 10.
+- **Eksporter til Excel** — lastar ned ei ekte `.xlsx`-fil (norske kolonnar).
 - **Del / send** — på iPhone opnar dette delingsmenyen, så du kan sende Excel-fila
   på e-post, til Filer, AirDrop osv.
+- **Automatisk oppdatering** — appen hentar nyaste versjon sjølv når du er på
+  nett; ingen reinstallering. Versjonsnummer visast nedst i appen.
 
 ## Installere på iPhone
 

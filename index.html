@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Registrer dagleg eggproduksjon og eksporter til Excel.">
 <title>Hønseri</title>
 
 <!-- PWA / iPhone -->
@@ -53,6 +54,11 @@
     -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+  }
+  button, input, select, textarea { touch-action: manipulation; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
   }
   .app { max-width: 720px; margin: 0 auto; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); }
 
@@ -105,11 +111,11 @@
     color: var(--text-muted); font-weight: 700; margin-bottom: 14px;
     display: flex; align-items: center; gap: 7px;
   }
-  .card-title svg { width: 15px; height: 15px; opacity: 0.85; }
+  .card-title svg { width: 15px; height: 15px; opacity: 0.85; flex-shrink: 0; }
 
   /* ---------- Hero egg input ---------- */
-  .hero { text-align: center; padding: 22px 16px; }
-  .hero .hero-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; margin-bottom: 14px; }
+  .hero { text-align: center; padding: 22px 16px 16px; }
+  .hero .hero-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700; margin-bottom: 14px; }
   .stepper { display: flex; align-items: center; justify-content: center; gap: 14px; }
   .stepper button {
     width: 52px; height: 52px; border-radius: 50%;
@@ -126,11 +132,21 @@
   }
   .hero-input::-webkit-outer-spin-button, .hero-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .hero-input:focus { outline: none; }
-  .hero .hero-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; }
+  .date-inline {
+    margin-top: 10px; display: inline-block; width: auto !important;
+    background: var(--surface-2) !important; border: 1px solid var(--border-strong) !important;
+    border-radius: 20px !important; padding: 6px 14px !important;
+    font-size: 0.82rem !important; font-weight: 600; color: var(--text-muted) !important;
+    text-align: center;
+  }
+  .date-inline.not-today {
+    color: var(--amber) !important; border-color: rgba(227,164,69,0.5) !important;
+    background: var(--amber-soft) !important;
+  }
 
   /* ---------- Person selector ---------- */
   .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .seg .opt input { display: none; }
+  .seg .opt input { position: absolute; opacity: 0; pointer-events: none; }
   .seg .opt label {
     display: block; text-align: center; padding: 13px 6px;
     border: 1px solid var(--border-strong); background: var(--surface-2);
@@ -141,6 +157,7 @@
     background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
     font-weight: 650;
   }
+  .seg .opt input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* ---------- Form fields ---------- */
   .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -160,13 +177,25 @@
 
   /* ---------- Submit ---------- */
   .submit-wrap { padding: 4px 16px 16px; }
+  .edit-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.4);
+    border-radius: var(--radius-sm); padding: 10px 13px; margin-bottom: 10px;
+    font-size: 0.82rem; color: var(--amber); font-weight: 600;
+  }
+  .edit-bar button {
+    background: none; border: 1px solid rgba(227,164,69,0.5); color: var(--amber);
+    border-radius: 8px; padding: 6px 11px; font-size: 0.76rem; font-weight: 650;
+    cursor: pointer; font-family: var(--font); white-space: nowrap;
+  }
   .btn-primary {
     width: 100%; background: var(--accent); color: #10240B; border: none;
     padding: 16px; font-size: 1rem; font-weight: 680; border-radius: var(--radius);
-    cursor: pointer; font-family: var(--font); transition: background 0.13s, transform 0.08s;
+    cursor: pointer; font-family: var(--font); transition: background 0.13s, transform 0.08s, opacity 0.13s;
     box-shadow: 0 4px 14px rgba(124,195,106,0.22);
   }
   .btn-primary:active { background: var(--accent-press); transform: scale(0.99); }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
 
   /* ---------- Buttons (secondary) ---------- */
   .btn-row { display: flex; gap: 9px; margin-bottom: 14px; }
@@ -177,7 +206,7 @@
     cursor: pointer; font-family: var(--font); transition: background 0.12s, border-color 0.12s;
   }
   .btn:active { background: var(--surface-2); }
-  .btn svg { width: 16px; height: 16px; }
+  .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
   .btn.accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 
   /* ---------- Stats ---------- */
@@ -193,7 +222,6 @@
   .stat .v.sm { font-size: 1.2rem; }
   .stat .l { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
   .stat .s { font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; }
-  /* Fargetonede metrikk-kort (inspirert av Tidely) */
   .stat.t-green { background: linear-gradient(155deg, var(--accent-soft), transparent 72%), var(--surface); border-color: rgba(124,195,106,0.28); }
   .stat.t-green .v, .stat.t-green .ico { color: var(--accent); }
   .stat.t-teal  { background: linear-gradient(155deg, var(--teal-soft), transparent 72%), var(--surface); border-color: rgba(95,191,201,0.28); }
@@ -211,7 +239,6 @@
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 14px; margin-bottom: 10px;
   }
-  /* Dagens registrering uthevast (inspirert av «Now»-kolonna i Tidely) */
   .entry.today {
     border-color: rgba(124,195,106,0.45);
     background: linear-gradient(158deg, var(--accent-soft), transparent 55%), var(--surface);
@@ -221,16 +248,18 @@
     background: var(--accent); border-radius: 0 3px 3px 0;
   }
   .badge-today { font-size: 0.64rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 8px; border-radius: 20px; letter-spacing: 0.02em; }
-  .entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
-  .entry-head .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; gap: 8px; }
+  .entry-head .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
   .entry-date { font-size: 0.92rem; font-weight: 650; }
+  .entry-actions { display: flex; gap: 2px; flex-shrink: 0; }
   .pill { font-size: 0.7rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
   .pill-la { background: var(--amber-soft); color: var(--amber); }
   .pill-na { background: var(--accent-soft); color: var(--accent); }
   .pill-va { background: var(--violet-soft); color: var(--violet); }
-  .btn-del { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 6px; display: grid; place-items: center; }
-  .btn-del:active { background: var(--red-soft); color: var(--red); }
-  .btn-del svg { width: 17px; height: 17px; }
+  .btn-ico { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 6px; border-radius: 8px; display: grid; place-items: center; }
+  .btn-ico:active { background: var(--surface-2); color: var(--text); }
+  .btn-ico.danger:active { background: var(--red-soft); color: var(--red); }
+  .btn-ico svg { width: 17px; height: 17px; }
   .entry-egg { font-size: 1.45rem; font-weight: 700; margin-bottom: 10px; }
   .entry-egg span { font-size: 0.8rem; font-weight: 500; color: var(--text-dim); margin-left: 4px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -240,18 +269,18 @@
   }
   .chip b { color: var(--text); font-weight: 650; }
   .chip.warn { background: var(--red-soft); border-color: rgba(229,103,90,0.3); color: #EE9389; }
-  .entry-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.45; }
+  .entry-note { font-size: 0.82rem; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.45; word-break: break-word; }
 
   .section-label { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); font-weight: 700; margin: 20px 2px 11px; }
   .section-label::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; box-shadow: 0 0 7px rgba(124,195,106,0.6); }
   .section-label .hint { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-dim); }
 
-  .empty {
-    text-align: center; padding: 48px 20px; color: var(--text-dim);
-  }
+  .empty { text-align: center; padding: 48px 20px; color: var(--text-dim); }
   .empty .ico { font-size: 2.4rem; margin-bottom: 10px; opacity: 0.6; }
   .empty .t { font-size: 0.92rem; font-weight: 550; color: var(--text-muted); }
   .empty .s { font-size: 0.82rem; margin-top: 4px; }
+
+  .ver { text-align: center; font-size: 0.68rem; color: var(--text-dim); opacity: 0.65; padding: 6px 0 10px; }
 
   /* ---------- Bottom nav ---------- */
   .nav {
@@ -278,13 +307,18 @@
     position: fixed; left: 50%; transform: translateX(-50%) translateY(20px);
     bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
     background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong);
-    padding: 12px 20px; border-radius: 12px; font-size: 0.88rem; font-weight: 550;
+    padding: 12px 18px; border-radius: 12px; font-size: 0.88rem; font-weight: 550;
     box-shadow: var(--shadow); opacity: 0; transition: all 0.28s; pointer-events: none;
-    z-index: 100; max-width: 88%; text-align: center; display: flex; align-items: center; gap: 8px;
+    z-index: 100; max-width: 90%; text-align: center; display: flex; align-items: center; gap: 12px;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.ok { border-color: var(--accent); }
   .toast.err { border-color: var(--red); }
+  .toast button {
+    background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent);
+    border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; font-family: var(--font); white-space: nowrap; flex-shrink: 0;
+  }
 
   @media (min-width: 560px) {
     .field-grid { grid-template-columns: repeat(3, 1fr); }
@@ -308,8 +342,8 @@
 
   <!-- ===== VIEW: REGISTRER ===== -->
   <section class="view active" id="view-form">
-    <div class="install-hint" id="install-hint">
-      <button class="close-hint" onclick="dismissHint()">×</button>
+    <div class="install-hint" id="install-hint" style="display:none;">
+      <button class="close-hint" onclick="dismissHint()" aria-label="lukk">×</button>
       <b>Tips:</b> Legg appen på hjemskjermen — trykk <b>Del</b> i Safari og vel
       <b>«Legg til på Hjem-skjerm»</b>. Då virkar han som ein vanleg app, også offline.
     </div>
@@ -326,12 +360,11 @@
     <div class="card hero" id="card-egg">
       <div class="hero-label" data-i18n="t_egg">Antall egg plukka</div>
       <div class="stepper">
-        <button type="button" onclick="bump('egg',-30)" aria-label="minus">−</button>
+        <button type="button" onclick="bump('egg',-30)" aria-label="minus 30">−</button>
         <input class="hero-input" type="number" id="egg" min="0" inputmode="numeric" placeholder="0">
-        <button type="button" onclick="bump('egg',30)" aria-label="pluss">+</button>
+        <button type="button" onclick="bump('egg',30)" aria-label="pluss 30">+</button>
       </div>
-      <div class="hero-sub" id="dato-sub"></div>
-      <input type="hidden" id="dato">
+      <input type="date" id="dato" class="date-inline" aria-label="Dato">
     </div>
 
     <div class="card" id="card-brett">
@@ -340,10 +373,10 @@
         <span data-i18n="t_brett">Brett til gardsbutikk</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label data-i18n="l_store">Store brett</label><input type="number" id="store" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label data-i18n="l_vanlige">Vanlege brett</label><input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label data-i18n="l_kartonger">Kartongar</label><input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label data-i18n="l_klink">Klink brett</label><input type="number" id="klink" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="store" data-i18n="l_store">Store brett</label><input type="number" id="store" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="vanlige" data-i18n="l_vanlige">Vanlege brett</label><input type="number" id="vanlige" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="kartonger" data-i18n="l_kartonger">Kartongar</label><input type="number" id="kartonger" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="klink" data-i18n="l_klink">Klink brett</label><input type="number" id="klink" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
     </div>
 
@@ -353,8 +386,8 @@
         <span data-i18n="t_paller">Pakking av paller</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label><span data-i18n="l_pall200">200-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label><span data-i18n="l_pall228">228-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="pall200"><span data-i18n="l_pall200">200-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="pall228"><span data-i18n="l_pall228">228-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
     </div>
 
@@ -364,19 +397,23 @@
         <span data-i18n="t_drift">Driftsdata</span>
       </div>
       <div class="field-grid">
-        <div class="field"><label data-i18n="l_for">For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label data-i18n="l_vann">Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
-        <div class="field"><label data-i18n="l_dode">Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="for" data-i18n="l_for">For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label for="vann" data-i18n="l_vann">Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
+        <div class="field"><label for="dode" data-i18n="l_dode">Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
       </div>
       <div class="field full" style="margin-top:12px;">
-        <label data-i18n="l_kommentar">Kommentar</label>
+        <label for="kommentar" data-i18n="l_kommentar">Kommentar</label>
         <textarea id="kommentar" data-i18n-ph="ph_kommentar" placeholder="Ev. merknadar…"></textarea>
       </div>
     </div>
   </section>
 
   <div class="submit-wrap" id="submit-wrap">
-    <button class="btn-primary" onclick="submitForm()" data-i18n="btn_save">Lagre registrering</button>
+    <div class="edit-bar" id="edit-bar" style="display:none;">
+      <span><span data-i18n="edit_mode">Redigerer registrering</span> · <b id="edit-date"></b></span>
+      <button type="button" onclick="cancelEdit()" data-i18n="btn_cancel_edit">Avbryt redigering</button>
+    </div>
+    <button class="btn-primary" id="btn-submit" onclick="submitForm()" data-i18n="btn_save">Lagre registrering</button>
   </div>
 
   <!-- ===== VIEW: LOGG ===== -->
@@ -392,7 +429,7 @@
       </button>
     </div>
     <div class="filter-row">
-      <select id="filter-person" onchange="renderLog()">
+      <select id="filter-person" onchange="renderLog()" aria-label="filter">
         <option value="" data-i18n="opt_all">Alle personar</option>
         <option value="Lars Andreas">Lars Andreas</option>
         <option value="Inese">Inese</option>
@@ -407,6 +444,7 @@
     <div id="stats-content"></div>
   </section>
 
+  <div class="ver" id="ver"></div>
 </div>
 
 <!-- Bottom nav -->
@@ -425,14 +463,34 @@
   </button>
 </nav>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+'use strict';
+
+/* ============================================================
+   Hønseri — dagsregistrering for eggproduksjon
+   Datamodell (localStorage 'honseri_entries'):
+   { id, navn, dato, egg, store, vanlige, kartonger, klink,
+     pall200, pall228, for, vann, dode, kommentar }
+   ============================================================ */
+
+const APP_VERSION = '2.0';
 const KEY = 'honseri_entries';
 
-function loadEntries() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; } }
-function saveEntries(arr) { localStorage.setItem(KEY, JSON.stringify(arr)); }
+/* ---------- Lagring (robust) ---------- */
+function loadEntries() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(KEY)) || [];
+    return Array.isArray(arr) ? arr.filter(e => e && typeof e.id === 'number' && typeof e.dato === 'string') : [];
+  } catch (e) { return []; }
+}
+function saveEntries(arr) {
+  try { localStorage.setItem(KEY, JSON.stringify(arr)); return true; }
+  catch (e) { toast(t('toast_storage_err'), true); return false; }
+}
 
+/* ---------- Dato ---------- */
 function today() {
   const d = new Date();
   return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -442,7 +500,8 @@ function formatDate(iso) {
   const [y,m,d] = iso.split('-');
   return `${d}.${m}.${y}`;
 }
-/* ---------- Språk (norsk / ukrainsk) ---------- */
+
+/* ---------- Språk (norsk / ukrainsk / latvisk) ---------- */
 const I18N = {
   no: {
     subtitle:'Dagsregistrering', t_person:'Kven registrerer', t_egg:'Antall egg plukka',
@@ -451,12 +510,14 @@ const I18N = {
     l_pall200:'200-paller', l_pall228:'228-paller', u_stk:'stk',
     l_for:'For på siloen', l_vann:'Vannmålar', l_dode:'Døde høner',
     l_kommentar:'Kommentar', ph_kommentar:'Ev. merknadar…', btn_save:'Lagre registrering',
+    btn_update:'Oppdater registrering', btn_cancel_edit:'Avbryt', edit_mode:'Redigerer registrering',
     btn_excel:'Excel', btn_share:'Del / send', opt_all:'Alle personar',
     nav_form:'Registrer', nav_log:'Logg', nav_stats:'Oversikt',
-    for_prefix:'for ', toast_minst:'Fyll inn minst eitt felt', toast_saved:'Registrering lagra',
-    toast_deleted:'Registrering sletta', toast_noexp:'Ingen data å eksportere',
-    toast_noshare:'Ingen data å dele', toast_excel:'Excel-fil lasta ned',
-    confirm_del:'Slett denne registreringa?',
+    toast_minst:'Fyll inn minst eitt felt', toast_saved:'Registrering lagra',
+    toast_updated:'Registrering oppdatert', toast_deleted:'Registrering sletta',
+    undo:'Angre', toast_undone:'Gjenoppretta',
+    toast_noexp:'Ingen data å eksportere', toast_noshare:'Ingen data å dele',
+    toast_excel:'Excel-fil lasta ned', toast_storage_err:'Klarte ikkje å lagre (fullt lager?)',
     egg_unit:'egg', c_butikk:'Butikk', c_store:'Store', c_vanlege:'Vanlege', c_kartong:'Kartong',
     c_klink:'Klink', c_200:'200-pall', c_228:'228-pall', c_for:'For', c_vatn:'Vatn', c_dode:'Døde',
     empty_log_t:'Ingen registreringar', empty_log_for:' for ',
@@ -464,7 +525,7 @@ const I18N = {
     empty_stats_t:'Ingen data enno', empty_stats_s:'Legg inn registreringar for å sjå statistikk.',
     s_total_egg:'Totalt egg', s_days:'registreringsdagar', s_avg:'Snitt per registrering', s_egg:'egg',
     s_last:'Siste registrering', s_dode_total:'Døde totalt', s_posts:'postar', s_recent:'Siste registreringar',
-    s_recent_hint:'siste 10', today_badge:'I dag'
+    s_recent_hint:'siste 10', today_badge:'I dag', aria_edit:'rediger', aria_del:'slett'
   },
   uk: {
     subtitle:'Щоденний облік', t_person:'Хто реєструє', t_egg:'Зібрано яєць',
@@ -473,12 +534,14 @@ const I18N = {
     l_pall200:'200-палети', l_pall228:'228-палети', u_stk:'шт',
     l_for:'Корм у силосі', l_vann:'Лічильник води', l_dode:'Загиблі кури',
     l_kommentar:'Коментар', ph_kommentar:'Примітки…', btn_save:'Зберегти запис',
+    btn_update:'Оновити запис', btn_cancel_edit:'Скасувати', edit_mode:'Редагування запису',
     btn_excel:'Excel', btn_share:'Поділитися', opt_all:'Усі',
     nav_form:'Реєстрація', nav_log:'Журнал', nav_stats:'Огляд',
-    for_prefix:'за ', toast_minst:'Заповніть хоча б одне поле', toast_saved:'Запис збережено',
-    toast_deleted:'Запис видалено', toast_noexp:'Немає даних для експорту',
-    toast_noshare:'Немає даних для надсилання', toast_excel:'Файл Excel завантажено',
-    confirm_del:'Видалити цей запис?',
+    toast_minst:'Заповніть хоча б одне поле', toast_saved:'Запис збережено',
+    toast_updated:'Запис оновлено', toast_deleted:'Запис видалено',
+    undo:'Відмінити', toast_undone:'Відновлено',
+    toast_noexp:'Немає даних для експорту', toast_noshare:'Немає даних для надсилання',
+    toast_excel:'Файл Excel завантажено', toast_storage_err:'Не вдалося зберегти (памʼять заповнена?)',
     egg_unit:'яєць', c_butikk:'Магазин', c_store:'Великі', c_vanlege:'Звичайні', c_kartong:'Картон',
     c_klink:'Клінк', c_200:'200-пал.', c_228:'228-пал.', c_for:'Корм', c_vatn:'Вода', c_dode:'Загиблі',
     empty_log_t:'Немає записів', empty_log_for:' для ',
@@ -486,7 +549,7 @@ const I18N = {
     empty_stats_t:'Поки немає даних', empty_stats_s:'Додайте записи, щоб побачити статистику.',
     s_total_egg:'Усього яєць', s_days:'днів обліку', s_avg:'Середнє за запис', s_egg:'яєць',
     s_last:'Останній запис', s_dode_total:'Усього загиблих', s_posts:'записів', s_recent:'Останні записи',
-    s_recent_hint:'останні 10', today_badge:'Сьогодні'
+    s_recent_hint:'останні 10', today_badge:'Сьогодні', aria_edit:'редагувати', aria_del:'видалити'
   },
   lv: {
     subtitle:'Ikdienas reģistrācija', t_person:'Kas reģistrē', t_egg:'Savāktās olas',
@@ -495,12 +558,14 @@ const I18N = {
     l_pall200:'200 paletes', l_pall228:'228 paletes', u_stk:'gab.',
     l_for:'Barība silosā', l_vann:'Ūdens skaitītājs', l_dode:'Beigtās vistas',
     l_kommentar:'Komentārs', ph_kommentar:'Piezīmes…', btn_save:'Saglabāt ierakstu',
+    btn_update:'Atjaunināt ierakstu', btn_cancel_edit:'Atcelt', edit_mode:'Rediģē ierakstu',
     btn_excel:'Excel', btn_share:'Kopīgot', opt_all:'Visi',
     nav_form:'Reģistrēt', nav_log:'Žurnāls', nav_stats:'Pārskats',
-    for_prefix:'', toast_minst:'Aizpildiet vismaz vienu lauku', toast_saved:'Ieraksts saglabāts',
-    toast_deleted:'Ieraksts dzēsts', toast_noexp:'Nav datu ko eksportēt',
-    toast_noshare:'Nav datu ko kopīgot', toast_excel:'Excel fails lejupielādēts',
-    confirm_del:'Dzēst šo ierakstu?',
+    toast_minst:'Aizpildiet vismaz vienu lauku', toast_saved:'Ieraksts saglabāts',
+    toast_updated:'Ieraksts atjaunināts', toast_deleted:'Ieraksts dzēsts',
+    undo:'Atsaukt', toast_undone:'Atjaunots',
+    toast_noexp:'Nav datu ko eksportēt', toast_noshare:'Nav datu ko kopīgot',
+    toast_excel:'Excel fails lejupielādēts', toast_storage_err:'Neizdevās saglabāt (pilna atmiņa?)',
     egg_unit:'olas', c_butikk:'Veikals', c_store:'Lielās', c_vanlege:'Parastās', c_kartong:'Kastes',
     c_klink:'Klink', c_200:'200-pal.', c_228:'228-pal.', c_for:'Barība', c_vatn:'Ūdens', c_dode:'Beigtās',
     empty_log_t:'Nav ierakstu', empty_log_for:' — ',
@@ -508,7 +573,7 @@ const I18N = {
     empty_stats_t:'Vēl nav datu', empty_stats_s:'Pievienojiet ierakstus, lai redzētu statistiku.',
     s_total_egg:'Kopā olas', s_days:'reģistrācijas dienas', s_avg:'Vidēji uz ierakstu', s_egg:'olas',
     s_last:'Pēdējais ieraksts', s_dode_total:'Kopā beigtās', s_posts:'ieraksti', s_recent:'Pēdējie ieraksti',
-    s_recent_hint:'pēdējie 10', today_badge:'Šodien'
+    s_recent_hint:'pēdējie 10', today_badge:'Šodien', aria_edit:'rediģēt', aria_del:'dzēst'
   }
 };
 let LANG = 'no';
@@ -528,21 +593,26 @@ function langFor(navn){ return navn === 'Vasyl' ? 'uk' : navn === 'Inese' ? 'lv'
 function updateDateDisplay(){
   const td = document.getElementById('today-display');
   if (td) td.innerHTML = `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
-  const ds = document.getElementById('dato-sub');
-  if (ds) ds.textContent = `${t('for_prefix')}${formatDate(today())}`;
 }
 function applyLang(lang){
-  LANG = lang === 'uk' ? 'uk' : 'no';
+  LANG = lang === 'uk' ? 'uk' : lang === 'lv' ? 'lv' : 'no';
   document.documentElement.lang = LANG;
   document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
   document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.getAttribute('data-i18n-ph')));
   updateDateDisplay();
+  updateSubmitUI();
   if (document.getElementById('view-log').classList.contains('active')) renderLog();
   if (document.getElementById('view-stats').classList.contains('active')) renderStats();
 }
 
+/* ---------- Oppstart ---------- */
 window.onload = function() {
-  document.getElementById('dato').value = today();
+  const dato = document.getElementById('dato');
+  dato.value = today();
+  dato.addEventListener('change', syncDateStyle);
+  syncDateStyle();
+
+  document.getElementById('ver').textContent = `Hønseri · v${APP_VERSION}`;
 
   const last = loadEntries();
   if (last.length > 0 && last[last.length-1].navn) {
@@ -550,12 +620,16 @@ window.onload = function() {
     if (radio) radio.checked = true;
   }
 
-  // Tilpass rekkjefølgja og språket på skjemaet etter kven som registrerer
+  // Skjemaet tilpassar rekkjefølgje og språk etter kven som registrerer
   document.querySelectorAll('input[name="navn"]').forEach(r =>
     r.addEventListener('change', () => { reorderForm(r.value); applyLang(langFor(r.value)); }));
   const checked = document.querySelector('input[name="navn"]:checked');
   reorderForm(checked ? checked.value : '');
   applyLang(langFor(checked ? checked.value : ''));
+
+  // Marker heile talet ved fokus, så ein kan skrive rett over
+  document.querySelectorAll('input[type="number"]').forEach(inp =>
+    inp.addEventListener('focus', () => setTimeout(() => { try { inp.select(); } catch(e){} }, 0)));
 
   if (navigator.canShare) document.getElementById('share-btn').style.display = '';
 
@@ -563,8 +637,6 @@ window.onload = function() {
   const standalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
   if (isIOS && !standalone && !localStorage.getItem('hint_dismissed')) {
     document.getElementById('install-hint').style.display = 'block';
-  } else {
-    document.getElementById('install-hint').style.display = 'none';
   }
 };
 
@@ -573,13 +645,18 @@ function dismissHint() {
   localStorage.setItem('hint_dismissed','1');
 }
 
+function syncDateStyle() {
+  const dato = document.getElementById('dato');
+  dato.classList.toggle('not-today', dato.value !== today());
+}
+
 function bump(id, delta) {
   const el = document.getElementById(id);
   const v = Math.max(0, (parseInt(el.value || '0', 10) || 0) + delta);
   el.value = v;
 }
 
-// Vasyl pakkar paller → løft paller-seksjonen øvst. Egg-plukkarane får paller til slutt.
+/* Vasyl pakkar paller → løft paller-seksjonen øvst. Egg-plukkarane får paller til slutt. */
 const FORM_ORDER = {
   'Vasyl':   ['card-person','card-paller','card-egg','card-brett','card-drift'],
   'default': ['card-person','card-egg','card-brett','card-drift','card-paller']
@@ -593,51 +670,125 @@ function reorderForm(navn) {
 }
 
 function showTab(tab) {
-  ['form','log','stats'].forEach(t => {
-    document.getElementById('view-'+t).classList.toggle('active', t === tab);
-    document.getElementById('nav-'+t).classList.toggle('active', t === tab);
+  ['form','log','stats'].forEach(tb => {
+    document.getElementById('view-'+tb).classList.toggle('active', tb === tab);
+    document.getElementById('nav-'+tb).classList.toggle('active', tb === tab);
   });
-  // submit-knappen høyrer berre til registreringsskjemaet
   document.getElementById('submit-wrap').style.display = tab === 'form' ? '' : 'none';
   if (tab === 'log') renderLog();
   if (tab === 'stats') renderStats();
-  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  window.scrollTo(0, 0);
 }
 
+/* ---------- Registrering (ny + redigering) ---------- */
+const NUM_FIELDS = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode'];
+let editingId = null;
+
+function updateSubmitUI() {
+  const btn = document.getElementById('btn-submit');
+  if (btn) btn.textContent = t(editingId != null ? 'btn_update' : 'btn_save');
+  const bar = document.getElementById('edit-bar');
+  if (bar) bar.style.display = editingId != null ? '' : 'none';
+}
+
+function clearForm() {
+  NUM_FIELDS.forEach(id => document.getElementById(id).value = '');
+  document.getElementById('kommentar').value = '';
+  document.getElementById('dato').value = today();
+  syncDateStyle();
+}
+
+function startEdit(id) {
+  const e = loadEntries().find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+
+  const radio = document.querySelector(`input[name="navn"][value="${e.navn}"]`);
+  document.querySelectorAll('input[name="navn"]').forEach(r => r.checked = false);
+  if (radio) {
+    radio.checked = true;
+    reorderForm(e.navn);
+    applyLang(langFor(e.navn));
+  }
+
+  NUM_FIELDS.forEach(id2 => {
+    const v = e[id2];
+    document.getElementById(id2).value = (v || v === 0) && v !== 0 ? String(v) : '';
+  });
+  document.getElementById('kommentar').value = e.kommentar || '';
+  document.getElementById('dato').value = e.dato;
+  syncDateStyle();
+
+  document.getElementById('edit-date').textContent = formatDate(e.dato);
+  updateSubmitUI();
+  showTab('form');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearForm();
+  updateSubmitUI();
+}
+
+let submitLock = false;
 function submitForm() {
+  if (submitLock) return;
   const navn = document.querySelector('input[name="navn"]:checked')?.value || '';
   const get = id => document.getElementById(id).value;
-  const num = id => { const v = get(id); return v === '' ? 0 : +v; };
+  const num = id => { const v = +get(id); return isFinite(v) && v > 0 ? v : 0; };
 
   // Ingen einskildfelt er påkravd, men registreringa kan ikkje vere heilt tom
-  const numIds = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode'];
-  if (!numIds.some(id => num(id) > 0)) {
+  if (!NUM_FIELDS.some(id => num(id) > 0)) {
     toast(t('toast_minst'), true); return;
   }
 
   const entry = {
-    id: Date.now(), navn, dato: get('dato'),
-    egg:+get('egg'), store:num('store'), vanlige:num('vanlige'),
-    kartonger:num('kartonger'), klink:num('klink'),
-    pall200:num('pall200'), pall228:num('pall228'),
-    for:num('for'), vann:num('vann'), dode:num('dode'),
+    id: editingId != null ? editingId : Date.now(),
+    navn, dato: get('dato') || today(),
+    egg: num('egg'), store: num('store'), vanlige: num('vanlige'),
+    kartonger: num('kartonger'), klink: num('klink'),
+    pall200: num('pall200'), pall228: num('pall228'),
+    for: num('for'), vann: num('vann'), dode: num('dode'),
     kommentar: get('kommentar').trim()
   };
 
   const entries = loadEntries();
-  entries.push(entry);
-  saveEntries(entries);
+  if (editingId != null) {
+    const i = entries.findIndex(x => x.id === editingId);
+    if (i >= 0) entries[i] = entry; else entries.push(entry);
+  } else {
+    entries.push(entry);
+  }
+  if (!saveEntries(entries)) return;
 
-  ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','kommentar']
-    .forEach(id => document.getElementById(id).value = '');
-  toast(t('toast_saved'), false, true);
+  submitLock = true;
+  setTimeout(() => submitLock = false, 500);
+
+  const wasEdit = editingId != null;
+  editingId = null;
+  clearForm();
+  updateSubmitUI();
+  toast(t(wasEdit ? 'toast_updated' : 'toast_saved'), false, true);
 }
 
-function toast(msg, isError, isOk) {
+/* ---------- Toast (med valfri handlingsknapp) ---------- */
+let toastTimer = null;
+function toast(msg, isError, isOk, action) {
   const el = document.getElementById('toast');
-  el.textContent = (isOk ? '✓ ' : '') + msg;
+  clearTimeout(toastTimer);
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode((isOk ? '✓ ' : '') + msg));
+  if (action) {
+    const b = document.createElement('button');
+    b.textContent = action.label;
+    b.onclick = () => { el.className = 'toast'; el.style.pointerEvents = 'none'; action.fn(); };
+    el.appendChild(b);
+    el.style.pointerEvents = 'auto';
+  } else {
+    el.style.pointerEvents = 'none';
+  }
   el.className = 'toast show ' + (isError ? 'err' : isOk ? 'ok' : '');
-  setTimeout(() => el.className = 'toast', 2400);
+  toastTimer = setTimeout(() => { el.className = 'toast'; el.style.pointerEvents = 'none'; }, action ? 5200 : 2400);
 }
 
 function pillClass(navn) { return navn === 'Lars Andreas' ? 'pill-la' : navn === 'Inese' ? 'pill-na' : 'pill-va'; }
@@ -656,7 +807,7 @@ function renderLog() {
   }
 
   list.innerHTML = entries.map(e => {
-    const butikk = e.store + e.vanlige + e.kartonger + e.klink;
+    const butikk = (e.store||0) + (e.vanlige||0) + (e.kartonger||0) + (e.klink||0);
     const dode = (e.dode||0) > 0 ? `<span class="chip warn">${t('c_dode')} <b>${e.dode}</b></span>` : '';
     const isToday = e.dato === today();
     return `<div class="entry${isToday?' today':''}">
@@ -666,21 +817,26 @@ function renderLog() {
           ${isToday?`<span class="badge-today">${t('today_badge')}</span>`:''}
           <span class="pill ${pillClass(e.navn)}">${esc(e.navn)}</span>
         </div>
-        <button class="btn-del" onclick="deleteEntry(${e.id})" aria-label="slett">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+        <div class="entry-actions">
+          <button class="btn-ico" onclick="startEdit(${e.id})" aria-label="${t('aria_edit')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="btn-ico danger" onclick="deleteEntry(${e.id})" aria-label="${t('aria_del')}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="entry-egg">${e.egg} <span>${t('egg_unit')}</span></div>
+      <div class="entry-egg">${e.egg||0} <span>${t('egg_unit')}</span></div>
       <div class="chips">
         <span class="chip">${t('c_butikk')} <b>${butikk}</b></span>
-        <span class="chip">${t('c_store')} <b>${e.store}</b></span>
-        <span class="chip">${t('c_vanlege')} <b>${e.vanlige}</b></span>
-        <span class="chip">${t('c_kartong')} <b>${e.kartonger}</b></span>
-        <span class="chip">${t('c_klink')} <b>${e.klink}</b></span>
+        <span class="chip">${t('c_store')} <b>${e.store||0}</b></span>
+        <span class="chip">${t('c_vanlege')} <b>${e.vanlige||0}</b></span>
+        <span class="chip">${t('c_kartong')} <b>${e.kartonger||0}</b></span>
+        <span class="chip">${t('c_klink')} <b>${e.klink||0}</b></span>
         ${e.pall200?`<span class="chip">${t('c_200')} <b>${e.pall200}</b></span>`:''}
         ${e.pall228?`<span class="chip">${t('c_228')} <b>${e.pall228}</b></span>`:''}
-        <span class="chip">${t('c_for')} <b>${e.for}</b></span>
-        <span class="chip">${t('c_vatn')} <b>${e.vann}</b></span>
+        <span class="chip">${t('c_for')} <b>${e.for||0}</b></span>
+        <span class="chip">${t('c_vatn')} <b>${e.vann||0}</b></span>
         ${dode}
       </div>
       ${e.kommentar?`<div class="entry-note">${esc(e.kommentar)}</div>`:''}
@@ -688,11 +844,24 @@ function renderLog() {
   }).join('');
 }
 
+/* Sletting med angre i staden for blokkert dialog */
 function deleteEntry(id) {
-  if (!confirm(t('confirm_del'))) return;
-  saveEntries(loadEntries().filter(e => e.id !== id));
+  const entries = loadEntries();
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  const removed = entries[idx];
+  entries.splice(idx, 1);
+  if (!saveEntries(entries)) return;
+  if (editingId === id) cancelEdit();
   renderLog();
-  toast(t('toast_deleted'));
+  toast(t('toast_deleted'), false, false, {
+    label: t('undo'),
+    fn: () => {
+      const es = loadEntries();
+      es.splice(Math.min(idx, es.length), 0, removed);
+      if (saveEntries(es)) { renderLog(); toast(t('toast_undone'), false, true); }
+    }
+  });
 }
 
 /* ---------- Oversikt ---------- */
@@ -705,7 +874,7 @@ function renderStats() {
     return;
   }
 
-  const totalEgg = entries.reduce((s,e) => s + e.egg, 0);
+  const totalEgg = entries.reduce((s,e) => s + (e.egg||0), 0);
   const avgEgg = Math.round(totalEgg / entries.length);
   const totalDode = entries.reduce((s,e) => s + (e.dode||0), 0);
   const last = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id)[0];
@@ -720,15 +889,15 @@ function renderStats() {
   let html = `<div class="stat-grid">
     <div class="stat t-green"><div class="ico">${ICO.egg}</div><div class="v">${totalEgg.toLocaleString('no')}</div><div class="l">${t('s_total_egg')}</div><div class="s">${days} ${t('s_days')}</div></div>
     <div class="stat t-teal"><div class="ico">${ICO.avg}</div><div class="v">${avgEgg.toLocaleString('no')}</div><div class="l">${t('s_avg')}</div><div class="s">${t('s_egg')}</div></div>
-    <div class="stat t-amber"><div class="ico">${ICO.clock}</div><div class="v sm">${formatDate(last.dato)}</div><div class="l">${t('s_last')}</div><div class="s">${last.egg} ${t('s_egg')} — ${esc(last.navn)}</div></div>
+    <div class="stat t-amber"><div class="ico">${ICO.clock}</div><div class="v sm">${formatDate(last.dato)}</div><div class="l">${t('s_last')}</div><div class="s">${last.egg||0} ${t('s_egg')} — ${esc(last.navn)}</div></div>
     <div class="stat t-red"><div class="ico">${ICO.dead}</div><div class="v">${totalDode}</div><div class="l">${t('s_dode_total')}</div><div class="s">${entries.length} ${t('s_posts')}</div></div>
   </div>`;
 
   const recent = [...entries].sort((a,b) => b.dato.localeCompare(a.dato) || b.id - a.id).slice(0, 10);
-  const maxEgg = Math.max(...recent.map(e => e.egg), 1);
+  const maxEgg = Math.max(...recent.map(e => e.egg||0), 1);
   html += `<div class="section-label">${t('s_recent')}<span class="hint">${t('s_recent_hint')}</span></div><div class="card" style="padding:14px;">`;
   recent.forEach((e,i) => {
-    const pct = Math.round(e.egg / maxEgg * 100);
+    const pct = Math.round((e.egg||0) / maxEgg * 100);
     const isToday = e.dato === today();
     const grad = isToday
       ? 'linear-gradient(90deg, var(--accent), #A6D977)'
@@ -736,7 +905,7 @@ function renderStats() {
     html += `<div style="margin-bottom:${i<recent.length-1?'13px':'0'};">
       <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:5px;">
         <span style="color:var(--text-muted);">${formatDate(e.dato)} · ${esc(e.navn)}</span>
-        <span style="font-weight:700;color:${isToday?'var(--accent)':'var(--text)'};">${e.egg}</span>
+        <span style="font-weight:700;color:${isToday?'var(--accent)':'var(--text)'};">${e.egg||0}</span>
       </div>
       <div style="height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden;">
         <div style="height:100%;width:${pct}%;background:${grad};border-radius:5px;"></div>
@@ -749,7 +918,7 @@ function renderStats() {
 
 /* ---------- Excel-eksport ---------- */
 const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Kommentar'];
-function entryRow(e){ return [formatDate(e.dato),e.navn,e.egg,e.store,e.vanlige,e.kartonger,e.klink,e.pall200||0,e.pall228||0,e.for,e.vann,e.dode||0,e.kommentar||'']; }
+function entryRow(e){ return [formatDate(e.dato),e.navn||'',e.egg||0,e.store||0,e.vanlige||0,e.kartonger||0,e.klink||0,e.pall200||0,e.pall228||0,e.for||0,e.vann||0,e.dode||0,e.kommentar||'']; }
 function sortedEntries(){ return [...loadEntries()].sort((a,b) => a.dato.localeCompare(b.dato) || a.id - b.id); }
 function buildXlsxBlob(){
   const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
@@ -783,7 +952,7 @@ function makeXlsx(rows, sheetName){
     row.forEach((val,c) => {
       const ref = colName(c)+(r+1);
       if (typeof val === 'number' && isFinite(val)) cells += `<c r="${ref}"><v>${val}</v></c>`;
-      else { const t = (val==null)?'':String(val); cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${x(t)}</t></is></c>`; }
+      else { const tv = (val==null)?'':String(val); cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${x(tv)}</t></is></c>`; }
     });
     sheetRows += `<row r="${r+1}">${cells}</row>`;
   });
@@ -800,7 +969,7 @@ function makeXlsx(rows, sheetName){
     {name:'xl/worksheets/sheet1.xml', data:sheetXml},
   ]);
 }
-const CRC_TABLE = (() => { const t=new Uint32Array(256); for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;} return t; })();
+const CRC_TABLE = (() => { const tb=new Uint32Array(256); for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);tb[n]=c>>>0;} return tb; })();
 function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_TABLE[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
 function zipStore(files){
   const enc = new TextEncoder(); const chunks=[]; const central=[]; let offset=0;
@@ -821,8 +990,6 @@ function zipStore(files){
 /* ---------- Service worker + automatisk oppdatering ---------- */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Last inn på nytt éin gong når ein ny versjon tek over (berre om appen
-    // alt vart styrt av ein service worker — unngår omlasting ved fyrste besøk).
     const hadController = !!navigator.serviceWorker.controller;
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -834,7 +1001,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
       const check = () => reg.update().catch(() => {});
       check();
-      setInterval(check, 60 * 1000);                 // sjekk kvart minutt
+      setInterval(check, 60 * 1000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
     }).catch(() => {});
   });
