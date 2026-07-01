@@ -487,6 +487,28 @@ const I18N = {
     s_total_egg:'Усього яєць', s_days:'днів обліку', s_avg:'Середнє за запис', s_egg:'яєць',
     s_last:'Останній запис', s_dode_total:'Усього загиблих', s_posts:'записів', s_recent:'Останні записи',
     s_recent_hint:'останні 10', today_badge:'Сьогодні'
+  },
+  lv: {
+    subtitle:'Ikdienas reģistrācija', t_person:'Kas reģistrē', t_egg:'Savāktās olas',
+    t_brett:'Paplātes veikalam', t_paller:'Palešu iepakošana', t_drift:'Ražošanas dati',
+    l_store:'Lielās paplātes', l_vanlige:'Parastās paplātes', l_kartonger:'Kartona kastes', l_klink:'Klink paplātes',
+    l_pall200:'200 paletes', l_pall228:'228 paletes', u_stk:'gab.',
+    l_for:'Barība silosā', l_vann:'Ūdens skaitītājs', l_dode:'Beigtās vistas',
+    l_kommentar:'Komentārs', ph_kommentar:'Piezīmes…', btn_save:'Saglabāt ierakstu',
+    btn_excel:'Excel', btn_share:'Kopīgot', opt_all:'Visi',
+    nav_form:'Reģistrēt', nav_log:'Žurnāls', nav_stats:'Pārskats',
+    for_prefix:'', toast_minst:'Aizpildiet vismaz vienu lauku', toast_saved:'Ieraksts saglabāts',
+    toast_deleted:'Ieraksts dzēsts', toast_noexp:'Nav datu ko eksportēt',
+    toast_noshare:'Nav datu ko kopīgot', toast_excel:'Excel fails lejupielādēts',
+    confirm_del:'Dzēst šo ierakstu?',
+    egg_unit:'olas', c_butikk:'Veikals', c_store:'Lielās', c_vanlege:'Parastās', c_kartong:'Kastes',
+    c_klink:'Klink', c_200:'200-pal.', c_228:'228-pal.', c_for:'Barība', c_vatn:'Ūdens', c_dode:'Beigtās',
+    empty_log_t:'Nav ierakstu', empty_log_for:' — ',
+    empty_log_s:'Jūsu ieraksti parādīsies šeit.',
+    empty_stats_t:'Vēl nav datu', empty_stats_s:'Pievienojiet ierakstus, lai redzētu statistiku.',
+    s_total_egg:'Kopā olas', s_days:'reģistrācijas dienas', s_avg:'Vidēji uz ierakstu', s_egg:'olas',
+    s_last:'Pēdējais ieraksts', s_dode_total:'Kopā beigtās', s_posts:'ieraksti', s_recent:'Pēdējie ieraksti',
+    s_recent_hint:'pēdējie 10', today_badge:'Šodien'
   }
 };
 let LANG = 'no';
@@ -494,14 +516,15 @@ function t(k){ const v = I18N[LANG] && I18N[LANG][k]; return v != null ? v : (I1
 
 const WEEKDAYS = {
   no: ['søndag','måndag','tysdag','onsdag','torsdag','fredag','laurdag'],
-  uk: ['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота']
+  uk: ['неділя','понеділок','вівторок','середа','четвер','пʼятниця','субота'],
+  lv: ['svētdiena','pirmdiena','otrdiena','trešdiena','ceturtdiena','piektdiena','sestdiena']
 };
 function weekday(iso) {
   const [y,m,d] = iso.split('-').map(Number);
   return (WEEKDAYS[LANG] || WEEKDAYS.no)[new Date(y, m-1, d).getDay()];
 }
 
-function langFor(navn){ return navn === 'Vasyl' ? 'uk' : 'no'; }
+function langFor(navn){ return navn === 'Vasyl' ? 'uk' : navn === 'Inese' ? 'lv' : 'no'; }
 function updateDateDisplay(){
   const td = document.getElementById('today-display');
   if (td) td.innerHTML = `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
