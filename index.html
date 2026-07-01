@@ -818,9 +818,26 @@ function zipStore(files){
   return new Blob([...chunks, ...central, end]);
 }
 
-/* ---------- Service worker ---------- */
+/* ---------- Service worker + automatisk oppdatering ---------- */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load', () => {
+    // Last inn på nytt éin gong når ein ny versjon tek over (berre om appen
+    // alt vart styrt av ein service worker — unngår omlasting ved fyrste besøk).
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+      const check = () => reg.update().catch(() => {});
+      check();
+      setInterval(check, 60 * 1000);                 // sjekk kvart minutt
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    }).catch(() => {});
+  });
 }
 </script>
 </body>
