@@ -99,6 +99,18 @@
   .view.active { display: block; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+  .remind-hint {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.4);
+    color: #F0C079; border-radius: var(--radius-sm); padding: 12px 14px;
+    font-size: 0.84rem; margin-bottom: 16px; line-height: 1.4;
+  }
+  .remind-hint b { color: #F3CE8C; font-weight: 650; }
+  .remind-hint button {
+    background: none; border: 1px solid rgba(227,164,69,0.5); color: var(--amber);
+    border-radius: 8px; padding: 7px 12px; font-size: 0.78rem; font-weight: 650;
+    cursor: pointer; font-family: var(--font); white-space: nowrap; flex-shrink: 0;
+  }
   .install-hint {
     background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.35);
     color: #F0C079; border-radius: var(--radius-sm); padding: 13px 38px 13px 14px;
@@ -381,6 +393,10 @@
 
   <!-- ===== VIEW: REGISTRER ===== -->
   <section class="view active" id="view-form">
+    <div class="remind-hint" id="remind-hint" style="display:none;">
+      <span>🥚 <b>Egg er ikkje registrert i dag</b></span>
+      <button type="button" id="notif-btn" onclick="enableNotifs()" style="display:none;">Slå på varsel</button>
+    </div>
     <div class="install-hint" id="install-hint" style="display:none;">
       <button class="close-hint" onclick="dismissHint()" aria-label="lukk">×</button>
       <b>Tips:</b> Legg appen på hjemskjermen — trykk <b>Del</b> i Safari og vel
@@ -439,6 +455,7 @@
         <div class="field"><label for="for" data-i18n="l_for">For på siloen</label><input type="number" id="for" min="0" inputmode="decimal" placeholder="0"></div>
         <div class="field"><label for="vann" data-i18n="l_vann">Vannmålar</label><input type="number" id="vann" min="0" inputmode="decimal" placeholder="0"></div>
         <div class="field"><label for="dode" data-i18n="l_dode">Døde høner</label><input type="number" id="dode" min="0" inputmode="numeric" placeholder="0"></div>
+        <div class="field"><label for="timer" data-i18n="l_timer">Timar arbeidd</label><input type="number" id="timer" min="0" step="0.5" inputmode="decimal" placeholder="0"></div>
       </div>
       <div class="field full" style="margin-top:12px;">
         <label for="kommentar" data-i18n="l_kommentar">Kommentar</label>
@@ -514,7 +531,7 @@
      pall200, pall228, for, vann, dode, kommentar }
    ============================================================ */
 
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const KEY = 'honseri_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -567,7 +584,7 @@ const I18N = {
     s_recent_hint:'siste 10', today_badge:'I dag', aria_edit:'rediger', aria_del:'slett',
     s_key:'Nøkkeltal', s_trend:'Egg-utvikling', s_trend_sub:'Egg per dag',
     s_trend_hint:'siste 14 dagar', s_mix:'Fordeling per person', s_mix_hint:'del av egga',
-    c_ovrig:'Øvrig'
+    c_ovrig:'Øvrig', l_timer:'Timar arbeidd', c_timer:'Timar'
   },
   uk: {
     subtitle:'Щоденний облік', t_person:'Хто реєструє', t_egg:'Зібрано яєць',
@@ -594,7 +611,7 @@ const I18N = {
     s_recent_hint:'останні 10', today_badge:'Сьогодні', aria_edit:'редагувати', aria_del:'видалити',
     s_key:'Ключові показники', s_trend:'Динаміка яєць', s_trend_sub:'Яєць на день',
     s_trend_hint:'останні 14 днів', s_mix:'Розподіл за особами', s_mix_hint:'частка яєць',
-    c_ovrig:'Інше'
+    c_ovrig:'Інше', l_timer:'Відпрацьовані години', c_timer:'Години'
   },
   lv: {
     subtitle:'Ikdienas reģistrācija', t_person:'Kas reģistrē', t_egg:'Savāktās olas',
@@ -621,11 +638,13 @@ const I18N = {
     s_recent_hint:'pēdējie 10', today_badge:'Šodien', aria_edit:'rediģēt', aria_del:'dzēst',
     s_key:'Galvenie rādītāji', s_trend:'Olu dinamika', s_trend_sub:'Olas dienā',
     s_trend_hint:'pēdējās 14 dienas', s_mix:'Sadalījums pa personām', s_mix_hint:'olu daļa',
-    c_ovrig:'Cits'
+    c_ovrig:'Cits', l_timer:'Nostrādātās stundas', c_timer:'Stundas'
   }
 };
 let LANG = 'no';
 function t(k){ const v = I18N[LANG] && I18N[LANG][k]; return v != null ? v : (I18N.no[k] != null ? I18N.no[k] : k); }
+/* Logg og Oversikt er alltid på norsk — berre registreringsskjemaet følgjer personen */
+function tno(k){ return I18N.no[k] != null ? I18N.no[k] : k; }
 
 const WEEKDAYS = {
   no: ['søndag','måndag','tysdag','onsdag','torsdag','fredag','laurdag'],
@@ -640,17 +659,17 @@ function weekday(iso) {
 function langFor(navn){ return navn === 'Vasyl' ? 'uk' : navn === 'Inese' ? 'lv' : 'no'; }
 function updateDateDisplay(){
   const td = document.getElementById('today-display');
-  if (td) td.innerHTML = `${weekday(today())}<span class="d">${formatDate(today())}</span>`;
+  if (td) td.innerHTML = `${WEEKDAYS.no[new Date().getDay()]}<span class="d">${formatDate(today())}</span>`;
 }
 function applyLang(lang){
   LANG = lang === 'uk' ? 'uk' : lang === 'lv' ? 'lv' : 'no';
-  document.documentElement.lang = LANG;
-  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
-  document.querySelectorAll('[data-i18n-ph]').forEach(el => el.placeholder = t(el.getAttribute('data-i18n-ph')));
+  // Berre registreringsdelen skiftar språk; nav, logg og oversikt er alltid norske
+  document.querySelectorAll('#view-form [data-i18n], #submit-wrap [data-i18n]')
+    .forEach(el => el.textContent = t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('#view-form [data-i18n-ph], #submit-wrap [data-i18n-ph]')
+    .forEach(el => el.placeholder = t(el.getAttribute('data-i18n-ph')));
   updateDateDisplay();
   updateSubmitUI();
-  if (document.getElementById('view-log').classList.contains('active')) renderLog();
-  if (document.getElementById('view-stats').classList.contains('active')) renderStats();
 }
 
 /* ---------- Oppstart ---------- */
@@ -686,11 +705,65 @@ window.onload = function() {
   if (isIOS && !standalone && !localStorage.getItem('hint_dismissed')) {
     document.getElementById('install-hint').style.display = 'block';
   }
+
+  // Påminning om egg-registrering: ved oppstart, ved fokus og kvar halvtime
+  checkEggReminder();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkEggReminder(); });
+  setInterval(checkEggReminder, 30 * 60 * 1000);
 };
 
 function dismissHint() {
   document.getElementById('install-hint').style.display = 'none';
   localStorage.setItem('hint_dismissed','1');
+}
+
+/* ---------- Påminning: egg ikkje registrert i dag ----------
+   Banner i appen + systemvarsel (frå kl. 17, éin gong per dag).
+   Systemvarsel krev at appen ligg på hjemskjermen (iOS) og at
+   brukaren har gjeve løyve. Utan server kan varselet berre
+   utløysast når appen er open/blir opna. */
+const NOTIFY_FROM_HOUR = 17;
+
+function eggsRegisteredToday() {
+  return loadEntries().some(e => e.dato === today() && (e.egg||0) > 0);
+}
+
+function checkEggReminder() {
+  const el = document.getElementById('remind-hint');
+  if (!el) return;
+  const missing = !eggsRegisteredToday();
+  el.style.display = missing ? 'flex' : 'none';
+  updateNotifBtn();
+  if (missing) maybeNotify();
+}
+
+function updateNotifBtn() {
+  const b = document.getElementById('notif-btn');
+  if (!b) return;
+  b.style.display = ('Notification' in window) && Notification.permission === 'default' ? '' : 'none';
+}
+
+function maybeNotify() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (new Date().getHours() < NOTIFY_FROM_HOUR) return;
+  if (localStorage.getItem('egg_notified') === today()) return;   // maks eitt varsel per dag
+  localStorage.setItem('egg_notified', today());
+  navigator.serviceWorker.getRegistration().then(reg => {
+    if (reg) reg.showNotification('Hønseri 🥚', {
+      body: 'Egg er ikkje registrert i dag enno.',
+      icon: 'icons/icon-192.png',
+      badge: 'icons/icon-192.png',
+      tag: 'egg-reminder'
+    });
+  }).catch(() => {});
+}
+
+function enableNotifs() {
+  if (!('Notification' in window)) { toast('Varsel krev at appen ligg på hjemskjermen', true); return; }
+  Notification.requestPermission().then(p => {
+    updateNotifBtn();
+    if (p === 'granted') { toast('Varsel aktivert', false, true); maybeNotify(); }
+  });
 }
 
 function syncDateStyle() {
@@ -729,7 +802,7 @@ function showTab(tab) {
 }
 
 /* ---------- Registrering (ny + redigering) ---------- */
-const NUM_FIELDS = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode'];
+const NUM_FIELDS = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','timer'];
 let editingId = null;
 
 function updateSubmitUI() {
@@ -797,6 +870,7 @@ function submitForm() {
     kartonger: num('kartonger'), klink: num('klink'),
     pall200: num('pall200'), pall228: num('pall228'),
     for: num('for'), vann: num('vann'), dode: num('dode'),
+    timer: num('timer'),
     kommentar: get('kommentar').trim()
   };
 
@@ -816,6 +890,7 @@ function submitForm() {
   editingId = null;
   clearForm();
   updateSubmitUI();
+  checkEggReminder();
   toast(t(wasEdit ? 'toast_updated' : 'toast_saved'), false, true);
 }
 
@@ -850,41 +925,42 @@ function renderLog() {
   const list = document.getElementById('log-list');
 
   if (!entries.length) {
-    list.innerHTML = `<div class="empty"><div class="ico">🪹</div><div class="t">${t('empty_log_t')}${filter?t('empty_log_for')+esc(filter):''}</div><div class="s">${t('empty_log_s')}</div></div>`;
+    list.innerHTML = `<div class="empty"><div class="ico">🪹</div><div class="t">${tno('empty_log_t')}${filter?tno('empty_log_for')+esc(filter):''}</div><div class="s">${tno('empty_log_s')}</div></div>`;
     return;
   }
 
   list.innerHTML = entries.map(e => {
     const butikk = (e.store||0) + (e.vanlige||0) + (e.kartonger||0) + (e.klink||0);
-    const dode = (e.dode||0) > 0 ? `<span class="chip warn">${t('c_dode')} <b>${e.dode}</b></span>` : '';
+    const dode = (e.dode||0) > 0 ? `<span class="chip warn">${tno('c_dode')} <b>${e.dode}</b></span>` : '';
     const isToday = e.dato === today();
     return `<div class="entry${isToday?' today':''}">
       <div class="entry-head">
         <div class="left">
           <span class="entry-date">${formatDate(e.dato)}</span>
-          ${isToday?`<span class="badge-today">${t('today_badge')}</span>`:''}
+          ${isToday?`<span class="badge-today">${tno('today_badge')}</span>`:''}
           <span class="pill ${pillClass(e.navn)}">${esc(e.navn)}</span>
         </div>
         <div class="entry-actions">
-          <button class="btn-ico" onclick="startEdit(${e.id})" aria-label="${t('aria_edit')}">
+          <button class="btn-ico" onclick="startEdit(${e.id})" aria-label="${tno('aria_edit')}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button class="btn-ico danger" onclick="deleteEntry(${e.id})" aria-label="${t('aria_del')}">
+          <button class="btn-ico danger" onclick="deleteEntry(${e.id})" aria-label="${tno('aria_del')}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
       </div>
-      <div class="entry-egg">${e.egg||0} <span>${t('egg_unit')}</span></div>
+      <div class="entry-egg">${e.egg||0} <span>${tno('egg_unit')}</span></div>
       <div class="chips">
-        <span class="chip">${t('c_butikk')} <b>${butikk}</b></span>
-        <span class="chip">${t('c_store')} <b>${e.store||0}</b></span>
-        <span class="chip">${t('c_vanlege')} <b>${e.vanlige||0}</b></span>
-        <span class="chip">${t('c_kartong')} <b>${e.kartonger||0}</b></span>
-        <span class="chip">${t('c_klink')} <b>${e.klink||0}</b></span>
-        ${e.pall200?`<span class="chip">${t('c_200')} <b>${e.pall200}</b></span>`:''}
-        ${e.pall228?`<span class="chip">${t('c_228')} <b>${e.pall228}</b></span>`:''}
-        <span class="chip">${t('c_for')} <b>${e.for||0}</b></span>
-        <span class="chip">${t('c_vatn')} <b>${e.vann||0}</b></span>
+        <span class="chip">${tno('c_butikk')} <b>${butikk}</b></span>
+        <span class="chip">${tno('c_store')} <b>${e.store||0}</b></span>
+        <span class="chip">${tno('c_vanlege')} <b>${e.vanlige||0}</b></span>
+        <span class="chip">${tno('c_kartong')} <b>${e.kartonger||0}</b></span>
+        <span class="chip">${tno('c_klink')} <b>${e.klink||0}</b></span>
+        ${e.pall200?`<span class="chip">${tno('c_200')} <b>${e.pall200}</b></span>`:''}
+        ${e.pall228?`<span class="chip">${tno('c_228')} <b>${e.pall228}</b></span>`:''}
+        <span class="chip">${tno('c_for')} <b>${e.for||0}</b></span>
+        <span class="chip">${tno('c_vatn')} <b>${e.vann||0}</b></span>
+        ${e.timer?`<span class="chip">${tno('c_timer')} <b>${e.timer}</b></span>`:''}
         ${dode}
       </div>
       ${e.kommentar?`<div class="entry-note">${esc(e.kommentar)}</div>`:''}
@@ -902,12 +978,12 @@ function deleteEntry(id) {
   if (!saveEntries(entries)) return;
   if (editingId === id) cancelEdit();
   renderLog();
-  toast(t('toast_deleted'), false, false, {
-    label: t('undo'),
+  toast(tno('toast_deleted'), false, false, {
+    label: tno('undo'),
     fn: () => {
       const es = loadEntries();
       es.splice(Math.min(idx, es.length), 0, removed);
-      if (saveEntries(es)) { renderLog(); toast(t('toast_undone'), false, true); }
+      if (saveEntries(es)) { renderLog(); toast(tno('toast_undone'), false, true); }
     }
   });
 }
@@ -918,7 +994,7 @@ function renderStats() {
   const root = document.getElementById('stats-content');
 
   if (!entries.length) {
-    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">${t('empty_stats_t')}</div><div class="s">${t('empty_stats_s')}</div></div>`;
+    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">${tno('empty_stats_t')}</div><div class="s">${tno('empty_stats_s')}</div></div>`;
     return;
   }
 
@@ -929,12 +1005,12 @@ function renderStats() {
   const days = new Set(entries.map(e => e.dato)).size;
 
   /* Nøkkeltal-fliser (EGGLY-stil: emoji, etikett, farga verdi, sub) */
-  let html = `<div class="section-label c-amber"><span class="emo">📊</span><span>${t('s_key')}</span></div>
+  let html = `<div class="section-label c-amber"><span class="emo">📊</span><span>${tno('s_key')}</span></div>
   <div class="stat-grid">
-    <div class="stat t-cyan"><div class="emo">🥚</div><div class="l">${t('s_total_egg')}</div><div class="v">${totalEgg.toLocaleString('no')}</div><div class="s">${days} ${t('s_days')}</div></div>
-    <div class="stat t-green"><div class="emo">⚖️</div><div class="l">${t('s_avg')}</div><div class="v">${avgEgg.toLocaleString('no')}</div><div class="s">${t('s_egg')}</div></div>
-    <div class="stat t-amber"><div class="emo">🕒</div><div class="l">${t('s_last')}</div><div class="v sm">${formatDate(last.dato)}</div><div class="s">${last.egg||0} ${t('s_egg')} — ${esc(last.navn)}</div></div>
-    <div class="stat t-red"><div class="emo">🐔</div><div class="l">${t('s_dode_total')}</div><div class="v">${totalDode}</div><div class="s">${entries.length} ${t('s_posts')}</div></div>
+    <div class="stat t-cyan"><div class="emo">🥚</div><div class="l">${tno('s_total_egg')}</div><div class="v">${totalEgg.toLocaleString('no')}</div><div class="s">${days} ${tno('s_days')}</div></div>
+    <div class="stat t-green"><div class="emo">⚖️</div><div class="l">${tno('s_avg')}</div><div class="v">${avgEgg.toLocaleString('no')}</div><div class="s">${tno('s_egg')}</div></div>
+    <div class="stat t-amber"><div class="emo">🕒</div><div class="l">${tno('s_last')}</div><div class="v sm">${formatDate(last.dato)}</div><div class="s">${last.egg||0} ${tno('s_egg')} — ${esc(last.navn)}</div></div>
+    <div class="stat t-red"><div class="emo">🐔</div><div class="l">${tno('s_dode_total')}</div><div class="v">${totalDode}</div><div class="s">${entries.length} ${tno('s_posts')}</div></div>
   </div>`;
 
   /* Egg-utvikling: sum per dato, siste 14 dagar, glødande arealgraf */
@@ -944,11 +1020,11 @@ function renderStats() {
                    .map(([dato, egg]) => ({dato, egg}));
   if (series.length) {
     const lastVal = series[series.length-1].egg;
-    html += `<div class="section-label c-cyan"><span class="emo">📈</span><span>${t('s_trend')}</span><span class="hint">${t('s_trend_hint')}</span></div>
+    html += `<div class="section-label c-cyan"><span class="emo">📈</span><span>${tno('s_trend')}</span><span class="hint">${tno('s_trend_hint')}</span></div>
     <div class="card">
       <div class="chart-head">
-        <div class="chart-sub">${t('s_trend_sub')}</div>
-        <div class="chart-badge">${lastVal.toLocaleString('no')} ${t('s_egg')}</div>
+        <div class="chart-sub">${tno('s_trend_sub')}</div>
+        <div class="chart-badge">${lastVal.toLocaleString('no')} ${tno('s_egg')}</div>
       </div>
       <div class="chart-wrap" id="trend-wrap">${trendSvg(series)}<div class="chart-tip" id="trend-tip"></div></div>
     </div>`;
@@ -959,14 +1035,14 @@ function renderStats() {
     { key:'Lars Andreas', label:'Lars Andreas', color:'var(--mix-la)' },
     { key:'Inese',        label:'Inese',        color:'var(--mix-na)' },
     { key:'Vasyl',        label:'Vasyl',        color:'var(--mix-va)' },
-    { key:'',             label:t('c_ovrig'),   color:'var(--mix-ov)' }
+    { key:'',             label:tno('c_ovrig'),   color:'var(--mix-ov)' }
   ];
   const sums = MIX.map(m => entries.filter(e => m.key ? e.navn === m.key : !MIX.slice(0,3).some(x => x.key === e.navn))
                                    .reduce((s,e) => s + (e.egg||0), 0));
   const mixTotal = sums.reduce((a,b) => a+b, 0);
   if (mixTotal > 0) {
     const parts = MIX.map((m,i) => ({...m, sum: sums[i], pct: sums[i]/mixTotal*100})).filter(p => p.sum > 0);
-    html += `<div class="section-label c-violet"><span class="emo">🧩</span><span>${t('s_mix')}</span><span class="hint">${t('s_mix_hint')}</span></div>
+    html += `<div class="section-label c-violet"><span class="emo">🧩</span><span>${tno('s_mix')}</span><span class="hint">${tno('s_mix_hint')}</span></div>
     <div class="card">
       <div class="mix-bar">${parts.map(p => `<div style="width:${p.pct}%;background:${p.color};"></div>`).join('')}</div>
       <div class="mix-legend">${parts.map(p =>
@@ -1057,8 +1133,8 @@ function attachTrendPointer(series) {
 }
 
 /* ---------- Excel-eksport ---------- */
-const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Kommentar'];
-function entryRow(e){ return [formatDate(e.dato),e.navn||'',e.egg||0,e.store||0,e.vanlige||0,e.kartonger||0,e.klink||0,e.pall200||0,e.pall228||0,e.for||0,e.vann||0,e.dode||0,e.kommentar||'']; }
+const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Timar arbeidd','Kommentar'];
+function entryRow(e){ return [formatDate(e.dato),e.navn||'',e.egg||0,e.store||0,e.vanlige||0,e.kartonger||0,e.klink||0,e.pall200||0,e.pall228||0,e.for||0,e.vann||0,e.dode||0,e.timer||0,e.kommentar||'']; }
 function sortedEntries(){ return [...loadEntries()].sort((a,b) => a.dato.localeCompare(b.dato) || a.id - b.id); }
 function buildXlsxBlob(){
   const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
@@ -1066,15 +1142,15 @@ function buildXlsxBlob(){
 }
 function exportName(){ return `honseri_logg_${today()}.xlsx`; }
 function exportExcel(){
-  if (!loadEntries().length) { toast(t('toast_noexp'), true); return; }
+  if (!loadEntries().length) { toast(tno('toast_noexp'), true); return; }
   const url = URL.createObjectURL(buildXlsxBlob());
   const a = document.createElement('a'); a.href = url; a.download = exportName();
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  toast(t('toast_excel'), false, true);
+  toast(tno('toast_excel'), false, true);
 }
 async function shareExcel(){
-  if (!loadEntries().length) { toast(t('toast_noshare'), true); return; }
+  if (!loadEntries().length) { toast(tno('toast_noshare'), true); return; }
   const file = new File([buildXlsxBlob()], exportName(), {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   try {
     if (navigator.canShare && navigator.canShare({files:[file]})) await navigator.share({files:[file], title:'Hønseri-logg'});

@@ -1,7 +1,7 @@
 /* Service worker for Hønseri-appen.
    Nettverk-først for sjølve appen (index.html) → du får alltid nyaste versjon
    når du er på nett, utan å reinstallere. Cache brukast som reserve når du er offline. */
-const CACHE = 'honseri-v10';
+const CACHE = 'honseri-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -58,5 +58,16 @@ self.addEventListener('fetch', event => {
       }
       return resp;
     }).catch(() => cached))
+  );
+});
+
+/* Trykk på varsel → opne (eller fokusere) appen */
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      return self.clients.openWindow('./');
+    })
   );
 });
