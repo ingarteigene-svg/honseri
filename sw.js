@@ -1,7 +1,7 @@
 /* Service worker for Hønseri-appen.
    Nettverk-først for sjølve appen (index.html) → du får alltid nyaste versjon
    når du er på nett, utan å reinstallere. Cache brukast som reserve når du er offline. */
-const CACHE = 'honseri-v11';
+const CACHE = 'honseri-v12';
 const ASSETS = [
   './',
   './index.html',

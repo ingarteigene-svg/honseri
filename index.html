@@ -333,6 +333,23 @@
 
   .ver { text-align: center; font-size: 0.68rem; color: var(--text-dim); opacity: 0.65; padding: 6px 0 10px; }
 
+  /* ---------- Synk-modal ---------- */
+  .gear { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 6px; opacity: 0.8; line-height: 1; }
+  .modal-back {
+    position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+    background: rgba(5,8,14,0.72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    padding: 20px;
+  }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius);
+    padding: 18px; width: 100%; max-width: 420px; box-shadow: var(--shadow);
+  }
+  .modal-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 13px; }
+  .sync-status { font-size: 0.78rem; color: var(--text-dim); margin-top: 10px; line-height: 1.5; min-height: 1.2em; }
+  .sync-status .ok { color: var(--accent); }
+  .sync-status .warn { color: var(--amber); }
+  .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
+
   /* ---------- Bottom nav ---------- */
   .nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
@@ -388,7 +405,10 @@
         <div class="sub" data-i18n="subtitle">Dagsregistrering</div>
       </div>
     </div>
-    <div class="date" id="today-display"></div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <div class="date" id="today-display"></div>
+      <button class="gear" onclick="openSync()" aria-label="synkronisering">⚙️</button>
+    </div>
   </div>
 
   <!-- ===== VIEW: REGISTRER ===== -->
@@ -503,6 +523,22 @@
   <div class="ver" id="ver"></div>
 </div>
 
+<!-- Synk-innstillingar (alltid norsk — admin-oppsett) -->
+<div class="modal-back" id="sync-modal" style="display:none;" onclick="if(event.target===this)closeSync()">
+  <div class="modal">
+    <div class="card-title">☁️ Synkronisering</div>
+    <p class="modal-desc">Lim inn synk-adressa frå Google Apps Script (sjå README i prosjektet).
+    Alle telefonar med same adresse deler éin felles logg, og alt hamnar i Google-regnearket til admin.</p>
+    <input type="url" id="sync-url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+    <div class="sync-status" id="sync-status"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeSync()">Lukk</button>
+      <button class="btn" onclick="syncNow()" id="sync-now-btn">Synk no</button>
+      <button class="btn accent" onclick="saveSyncUrl()">Lagre</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bottom nav -->
 <nav class="nav">
   <button class="active" id="nav-form" onclick="showTab('form')">
@@ -531,7 +567,7 @@
      pall200, pall228, for, vann, dode, kommentar }
    ============================================================ */
 
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const KEY = 'honseri_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -710,6 +746,13 @@ window.onload = function() {
   checkEggReminder();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkEggReminder(); });
   setInterval(checkEggReminder, 30 * 60 * 1000);
+
+  // Synk: send det som ventar og hent fellesdata i bakgrunnen
+  if (syncUrl()) {
+    flushQueue();
+    pullAll().then(() => { checkEggReminder(); }).catch(() => {});
+  }
+  window.addEventListener('online', () => { flushQueue(); });
 };
 
 function dismissHint() {
@@ -766,6 +809,119 @@ function enableNotifs() {
   });
 }
 
+/* ---------- Synkronisering (felles data via Google Apps Script) ----------
+   Kvar endring blir lagt i ein kø og sendt når det er nett. Ved opning av
+   Logg/Oversikt hentast fellesdata og flettast med det som ventar i køa.
+   Regnearket til admin er kjelda til sanninga. */
+const SYNC_URL_KEY = 'honseri_sync_url';
+const SYNC_QUEUE_KEY = 'honseri_sync_queue';
+const SYNC_LAST_KEY = 'honseri_sync_last';
+
+function syncUrl(){ return (localStorage.getItem(SYNC_URL_KEY) || '').trim(); }
+function loadQueue(){ try { return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY)) || []; } catch(e) { return []; } }
+function storeQueue(q){ try { localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); } catch(e) {} }
+
+function enqueueSync(op) {
+  if (!syncUrl()) return;
+  const q = loadQueue();
+  q.push(op);
+  storeQueue(q);
+  flushQueue();
+}
+
+let flushing = false;
+async function flushQueue() {
+  if (flushing || !syncUrl() || !navigator.onLine) return;
+  flushing = true;
+  try {
+    let q = loadQueue();
+    while (q.length) {
+      const r = await fetch(syncUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(q[0])
+      });
+      const j = await r.json();
+      if (!j || !j.ok) throw new Error('synk-feil');
+      q = loadQueue(); q.shift(); storeQueue(q);
+    }
+  } catch (e) { /* prøver att seinare (nett/kø) */ }
+  finally { flushing = false; updateSyncStatus(); }
+}
+
+function sanitizeEntry(e) {
+  if (!e || e.id == null || !e.dato) return null;
+  const n = k => { const v = +e[k]; return isFinite(v) && v > 0 ? v : 0; };
+  return {
+    id: +e.id, navn: String(e.navn || ''), dato: String(e.dato).slice(0,10),
+    egg: n('egg'), store: n('store'), vanlige: n('vanlige'), kartonger: n('kartonger'),
+    klink: n('klink'), pall200: n('pall200'), pall228: n('pall228'),
+    for: n('for'), vann: n('vann'), dode: n('dode'), timer: n('timer'),
+    kommentar: String(e.kommentar || ''), updatedAt: String(e.updatedAt || '')
+  };
+}
+
+async function pullAll() {
+  if (!syncUrl() || !navigator.onLine) return false;
+  const r = await fetch(syncUrl() + '?all=1');
+  const j = await r.json();
+  if (!j || !j.ok || !Array.isArray(j.entries)) throw new Error('uventa svar');
+  const map = new Map(j.entries.map(sanitizeEntry).filter(Boolean).map(e => [e.id, e]));
+  // Endringar som enno ikkje er sende, vinn lokalt til dei er leverte
+  loadQueue().forEach(op => {
+    if (op.action === 'upsert' && op.entry) map.set(+op.entry.id, op.entry);
+    else if (op.action === 'delete') map.delete(+op.id);
+  });
+  saveEntries([...map.values()]);
+  localStorage.setItem(SYNC_LAST_KEY, new Date().toISOString());
+  updateSyncStatus();
+  return true;
+}
+
+function pullAndRefresh(tab) {
+  if (!syncUrl()) return;
+  flushQueue();
+  pullAll().then(() => {
+    if (tab === 'log' && document.getElementById('view-log').classList.contains('active')) renderLog();
+    if (tab === 'stats' && document.getElementById('view-stats').classList.contains('active')) renderStats();
+  }).catch(() => {});
+}
+
+/* Synk-modal */
+function openSync() {
+  document.getElementById('sync-url').value = syncUrl();
+  updateSyncStatus();
+  document.getElementById('sync-modal').style.display = 'flex';
+}
+function closeSync() { document.getElementById('sync-modal').style.display = 'none'; }
+function updateSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (!syncUrl()) { el.innerHTML = 'Synk er <span class="warn">av</span> — data ligg berre på denne telefonen.'; return; }
+  const q = loadQueue().length;
+  const last = localStorage.getItem(SYNC_LAST_KEY);
+  const lastTxt = last ? formatDate(last.slice(0,10)) + ' ' + last.slice(11,16) : 'aldri';
+  el.innerHTML = `Synk er <span class="ok">på</span> · sist henta: ${lastTxt} · i kø: ${q}`;
+}
+function saveSyncUrl() {
+  const v = document.getElementById('sync-url').value.trim();
+  if (v && !/^https:\/\//.test(v)) { toast('Adressa må starte med https://', true); return; }
+  try { localStorage.setItem(SYNC_URL_KEY, v); } catch(e) {}
+  updateSyncStatus();
+  if (v) { toast('Synk aktivert', false, true); syncNow(); }
+  else toast('Synk slått av');
+}
+function syncNow() {
+  if (!syncUrl()) { toast('Lim inn synk-adresse først', true); return; }
+  const btn = document.getElementById('sync-now-btn');
+  btn.disabled = true;
+  flushQueue();
+  pullAll().then(ok => {
+    if (ok) { toast('Synkronisert', false, true); renderLog(); if (document.getElementById('view-stats').classList.contains('active')) renderStats(); }
+  }).catch(() => toast('Fekk ikkje kontakt — sjekk adressa/nettet', true))
+    .finally(() => { btn.disabled = false; updateSyncStatus(); });
+}
+
 function syncDateStyle() {
   const dato = document.getElementById('dato');
   dato.classList.toggle('not-today', dato.value !== today());
@@ -796,8 +952,8 @@ function showTab(tab) {
     document.getElementById('nav-'+tb).classList.toggle('active', tb === tab);
   });
   document.getElementById('submit-wrap').style.display = tab === 'form' ? '' : 'none';
-  if (tab === 'log') renderLog();
-  if (tab === 'stats') renderStats();
+  if (tab === 'log') { renderLog(); pullAndRefresh('log'); }
+  if (tab === 'stats') { renderStats(); pullAndRefresh('stats'); }
   window.scrollTo(0, 0);
 }
 
@@ -863,8 +1019,10 @@ function submitForm() {
     toast(t('toast_minst'), true); return;
   }
 
+  // Unik id på tvers av telefonar: millisekund + tilfeldig suffiks
   const entry = {
-    id: editingId != null ? editingId : Date.now(),
+    id: editingId != null ? editingId : Date.now() * 1000 + Math.floor(Math.random() * 1000),
+    updatedAt: new Date().toISOString(),
     navn, dato: get('dato') || today(),
     egg: num('egg'), store: num('store'), vanlige: num('vanlige'),
     kartonger: num('kartonger'), klink: num('klink'),
@@ -882,6 +1040,7 @@ function submitForm() {
     entries.push(entry);
   }
   if (!saveEntries(entries)) return;
+  enqueueSync({ action: 'upsert', entry });
 
   submitLock = true;
   setTimeout(() => submitLock = false, 500);
@@ -976,6 +1135,7 @@ function deleteEntry(id) {
   const removed = entries[idx];
   entries.splice(idx, 1);
   if (!saveEntries(entries)) return;
+  enqueueSync({ action: 'delete', id });
   if (editingId === id) cancelEdit();
   renderLog();
   toast(tno('toast_deleted'), false, false, {
@@ -983,7 +1143,10 @@ function deleteEntry(id) {
     fn: () => {
       const es = loadEntries();
       es.splice(Math.min(idx, es.length), 0, removed);
-      if (saveEntries(es)) { renderLog(); toast(tno('toast_undone'), false, true); }
+      if (saveEntries(es)) {
+        enqueueSync({ action: 'upsert', entry: removed });
+        renderLog(); toast(tno('toast_undone'), false, true);
+      }
     }
   });
 }

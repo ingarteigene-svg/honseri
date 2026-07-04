@@ -52,10 +52,39 @@ installasjonsstega over.
 
 ## Korleis data blir lagra
 
-Data blir lagra i nettlesaren (localStorage) på den eininga du brukar — det krev
-ingen konto eller internett. Vil du ta vare på data eller flytte dei, brukar du
-**Eksporter til Excel** jamleg. Om du tømmer nettlesardata eller avinstallerer
-appen, forsvinn registreringane, så eksporter regelmessig.
+Data blir lagra lokalt på kvar eining (localStorage) og virkar utan nett.
+I tillegg kan appen **synkronisere til eit felles Google-regneark**, slik at
+admin ser alle registreringar frå alle telefonane — og regnearket kan lastast
+ned som Excel når som helst.
+
+## Felles data for alle telefonar (synk-oppsett, éin gong)
+
+Admin gjer dette éin gong (~5 minutt, krev Google-konto):
+
+1. Gå til [sheets.new](https://sheets.new) og lag eit nytt regneark.
+   Gje det namn, t.d. **«Hønseri-data»**.
+2. I regnearket: meny **Utvidingar → Apps Script**.
+3. Slett innhaldet i redigeringsvindauget og lim inn heile innhaldet frå fila
+   **`sync/apps-script.gs`** i dette prosjektet. Trykk 💾 (lagre).
+4. Trykk **Distribuer → Ny distribusjon** (Deploy → New deployment).
+   - Type: **Nettapp** (Web app)
+   - «Køyr som» (Execute as): **Meg**
+   - «Kven har tilgang» (Who has access): **Alle** (Anyone)
+   - Trykk **Distribuer** og godkjenn tilgangane (vel Google-kontoen din,
+     «Avansert» → «Gå vidare» om det kjem ei åtvaring — det er ditt eige skript).
+5. Kopier **nettapp-adressa** (sluttar på `/exec`).
+6. I Hønseri-appen på **kvar telefon**: trykk **⚙️** oppe til høgre,
+   lim inn adressa og trykk **Lagre**.
+
+Frå då av:
+- Alle registreringar frå alle telefonar hamnar i regnearket (arket «Data»)
+- Logg og Oversikt på kvar telefon viser fellesdataa
+- Admin opnar berre regnearket for å sjå alt — og kan laste ned som Excel
+  (Fil → Last ned → Microsoft Excel)
+
+> ⚠️ Synk-adressa fungerer som nøkkel: alle som har henne kan lese og skrive
+> loggen. Del henne berre med dei tilsette. Registreringar gjort utan nett
+> blir lagt i kø og sendt automatisk når telefonen er på nett att.
 
 ## Filer
 
