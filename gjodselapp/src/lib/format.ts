@@ -1,3 +1,10 @@
+/** Unik ID for registreringer og skifter. */
+export function newId(): string {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+}
+
 /** Dagens dato i lokal tid som yyyy-mm-dd. */
 export function todayISO(): string {
   const d = new Date();

@@ -1,7 +1,11 @@
 // Service worker: offline-cache av app-shell.
+// Alle stier bygges relativt til registreringens scope, slik at
+// samme fil fungerer både på rot (localhost) og understi (GitHub Pages).
 // Graph-/innloggingskall (annet origin) røres aldri.
-const CACHE = 'gjodsel-shell-v1';
-const SHELL = ['/', '/logg', '/skifter', '/innstillinger', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'gjodsel-shell-v2';
+const SCOPE = self.registration.scope; // f.eks. https://…/honseri/
+const shellUrl = (p) => new URL(p, SCOPE).toString();
+const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -35,7 +39,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((m) => m || caches.match('/')))
+        .catch(() => caches.match(req).then((m) => m || caches.match(shellUrl(''))))
     );
     return;
   }

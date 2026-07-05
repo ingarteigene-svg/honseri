@@ -4,6 +4,13 @@ import { PublicClientApplication } from '@azure/msal-browser';
 // offline_access (refresh token) håndteres automatisk av MSAL.
 export const GRAPH_SCOPES = ['Files.ReadWrite'];
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
+/** Appens redirect-URI – må registreres i Azure under SPA-plattformen. */
+export function appRedirectUri(): string {
+  return `${window.location.origin}${BASE}/`;
+}
+
 let instance: PublicClientApplication | null = null;
 let instanceClientId = '';
 
@@ -17,8 +24,8 @@ export async function getMsal(clientId: string): Promise<PublicClientApplication
       auth: {
         clientId,
         authority: 'https://login.microsoftonline.com/common',
-        redirectUri: window.location.origin,
-        postLogoutRedirectUri: window.location.origin,
+        redirectUri: appRedirectUri(),
+        postLogoutRedirectUri: appRedirectUri(),
       },
       cache: {
         cacheLocation: 'localStorage',

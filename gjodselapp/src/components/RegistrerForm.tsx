@@ -3,46 +3,52 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useEntries } from '@/store/entries';
 import { useSettings } from '@/store/settings';
+import { useSkifter } from '@/store/skifter';
 import { useAuth, useSync } from './Providers';
 import { useToast } from './Toast';
 import { Field, PBar, StatusChip } from './ui';
 import { accumulatedP, calcDelivery, round, statusFor } from '@/lib/calc';
-import { fmtNum, todayISO } from '@/lib/format';
+import { fmtNum, newId, todayISO } from '@/lib/format';
 import { Entry } from '@/lib/types';
 
-function newId(): string {
-  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-}
+const NYTT = '__nytt__';
 
 export default function RegistrerForm() {
   const settings = useSettings();
   const entries = useEntries((s) => s.entries);
   const add = useEntries((s) => s.add);
+  const skifter = useSkifter((s) => s.skifter);
+  const addSkifte = useSkifter((s) => s.add);
   const { configured, account } = useAuth();
   const { syncNow } = useSync();
   const toast = useToast();
 
   const [dato, setDato] = useState('');
-  const [skifte, setSkifte] = useState('');
+  const [sel, setSel] = useState(''); // skifte-id eller NYTT
+  const [nyttNavn, setNyttNavn] = useState('');
   const [mottaker, setMottaker] = useState('');
   const [lass, setLass] = useState('');
   const [areal, setAreal] = useState('');
 
   useEffect(() => setDato(todayISO()), []);
 
-  // Autocomplete fra tidligere leveringer
-  const skifter = useMemo(
-    () => [...new Set(entries.map((e) => e.skifte).filter(Boolean))].sort(),
-    [entries],
+  const sortedSkifter = useMemo(
+    () => [...skifter].sort((a, b) => a.navn.localeCompare(b.navn, 'nb')),
+    [skifter],
   );
 
-  /** Ved kjent skifte: fyll inn arealet fra forrige levering automatisk. */
-  function onSkifteChange(value: string) {
-    setSkifte(value);
-    const prev = [...entries].reverse().find((e) => e.skifte === value);
-    if (prev) setAreal(String(prev.areal));
+  const valgt = skifter.find((s) => s.id === sel);
+  const skifteNavn = sel === NYTT ? nyttNavn.trim() : (valgt?.navn ?? '');
+
+  /** Fast skifte valgt → arealet fylles inn automatisk. */
+  function onSelChange(value: string) {
+    setSel(value);
+    if (value && value !== NYTT) {
+      const s = skifter.find((x) => x.id === value);
+      if (s) setAreal(String(s.areal));
+    } else {
+      setAreal('');
+    }
   }
 
   // Live-beregning mens man taster
@@ -51,21 +57,25 @@ export default function RegistrerForm() {
   const inputValid = !Number.isNaN(lassN) && lassN >= 1 && !Number.isNaN(arealN) && arealN > 0;
   const preview = inputValid ? calcDelivery(lassN, arealN, settings) : null;
   const year = dato.slice(0, 4);
-  const accBefore = skifte.trim() ? accumulatedP(entries, skifte.trim(), year) : 0;
+  const accBefore = skifteNavn ? accumulatedP(entries, skifteNavn, year) : 0;
   const accAfter = preview ? round(accBefore + preview.pPerDaa, 2) : accBefore;
   const previewStatus = preview ? statusFor(accAfter, settings.pGrense) : null;
 
   function save() {
-    if (!dato || !skifte.trim() || !inputValid) {
+    if (!dato || !skifteNavn || !inputValid) {
       toast('Fyll ut dato, skifte, antall lass og areal', true);
       return;
     }
+    // Nytt skifte lagres som fast skifte med arealet sitt
+    if (sel === NYTT && !skifter.some((s) => s.navn.toLowerCase() === skifteNavn.toLowerCase())) {
+      addSkifte(skifteNavn, arealN);
+    }
     const c = calcDelivery(lassN, arealN, settings);
-    const acc = round(accumulatedP(entries, skifte.trim(), year) + c.pPerDaa, 2);
+    const acc = round(accumulatedP(entries, skifteNavn, year) + c.pPerDaa, 2);
     const entry: Entry = {
       id: newId(),
       dato,
-      skifte: skifte.trim(),
+      skifte: skifteNavn,
       mottaker: mottaker.trim(),
       lass: lassN,
       areal: arealN,
@@ -81,7 +91,8 @@ export default function RegistrerForm() {
     toast(willSync ? 'Registrert ✓' : 'Lagret lokalt – synkroniseres når tilkoblet');
     if (willSync) void syncNow();
 
-    setSkifte('');
+    setSel('');
+    setNyttNavn('');
     setMottaker('');
     setLass('');
     setAreal('');
@@ -100,23 +111,31 @@ export default function RegistrerForm() {
           />
         </Field>
 
-        <Field label="Skiftenavn" required>
-          <input
-            type="text"
-            className="input-field"
-            list="skifte-list"
-            placeholder="F.eks. Elvane"
-            autoComplete="off"
-            autoCapitalize="sentences"
-            value={skifte}
-            onChange={(e) => onSkifteChange(e.target.value)}
-          />
-          <datalist id="skifte-list">
-            {skifter.map((s) => (
-              <option key={s} value={s} />
+        <Field label="Skifte" required>
+          <select className="input-field" value={sel} onChange={(e) => onSelChange(e.target.value)}>
+            <option value="">Velg skifte…</option>
+            {sortedSkifter.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.navn} ({fmtNum(s.areal)} daa)
+              </option>
             ))}
-          </datalist>
+            <option value={NYTT}>+ Nytt skifte…</option>
+          </select>
         </Field>
+
+        {sel === NYTT && (
+          <Field label="Navn på nytt skifte" required>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="F.eks. Elvane"
+              autoComplete="off"
+              autoCapitalize="sentences"
+              value={nyttNavn}
+              onChange={(e) => setNyttNavn(e.target.value)}
+            />
+          </Field>
+        )}
 
         <Field label="Mottaker / navn">
           <input
@@ -175,7 +194,8 @@ export default function RegistrerForm() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-muted">
               <span>
-                {skifte.trim() || 'Skiftet'} i {year}: {fmtNum(accAfter)} av {fmtNum(settings.pGrense)} kg P/daa
+                {skifteNavn || 'Skiftet'} i {year}: {fmtNum(accAfter)} av{' '}
+                {fmtNum(settings.pGrense)} kg P/daa
               </span>
               <StatusChip status={previewStatus} />
             </div>

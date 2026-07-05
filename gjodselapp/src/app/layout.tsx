@@ -3,18 +3,20 @@ import './globals.css';
 import Providers from '@/components/Providers';
 import AppShell from '@/components/AppShell';
 
+const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export const metadata: Metadata = {
   title: 'Gjødseljournal – Klokkargarden',
   description:
     'Registrering og dokumentasjon av hønsegjødselleveringer etter gjødselbrukforskriften § 27',
-  manifest: '/manifest.json',
+  manifest: `${base}/manifest.json`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Gjødsel',
   },
   icons: {
-    apple: '/icon-192.png',
+    apple: `${base}/icon-192.png`,
   },
 };
 

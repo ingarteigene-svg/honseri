@@ -6,6 +6,7 @@ import { getMsal, GRAPH_SCOPES } from '@/lib/msal';
 import { appendJournalRow, entryToRow } from '@/lib/graph';
 import { useSettings } from '@/store/settings';
 import { useEntries } from '@/store/entries';
+import { useSkifter } from '@/store/skifter';
 import { ToastProvider } from './Toast';
 import SwRegister from './SwRegister';
 
@@ -62,9 +63,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
   const busy = useRef(false);
 
-  // Forhåndslast 2026-dataene ved første oppstart
+  // Forhåndslast 2026-dataene og bygg skiftelista ved første oppstart
   useEffect(() => {
     seedIfEmpty();
+    const sk = useSkifter.getState();
+    if (!sk.seeded) {
+      sk.seedFrom(
+        useEntries.getState().entries.map((e) => ({ navn: e.skifte, areal: e.areal })),
+      );
+    }
   }, [seedIfEmpty]);
 
   // Init MSAL og fang opp svar fra redirect-innlogging

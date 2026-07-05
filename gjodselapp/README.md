@@ -9,9 +9,11 @@ og **Zustand** (lokal lagring i `localStorage`).
 
 ## Funksjoner
 
-- **Registrer** – feltskjema med dato, skiftenavn (autocomplete fra tidligere leveringer,
-  arealet fylles inn automatisk), mottaker og antall lass. Live-forhåndsvisning av beregningene
-  og akkumulert P-belastning før du lagrer. Haptisk kvittering ved lagring.
+- **Registrer** – feltskjema med dato, skiftevelger (faste skifter med arealet ferdig utfylt,
+  eller «+ Nytt skifte» som lagres automatisk), mottaker og antall lass. Live-forhåndsvisning
+  av beregningene og akkumulert P-belastning før du lagrer. Haptisk kvittering ved lagring.
+- **Faste skifter** – skiftene administreres med navn og fast areal i Innstillinger, så slipper
+  du å taste arealet ute i felt. Skiftelista bygges automatisk fra eksisterende leveringer.
 - **Logg** – alle registreringer med status (OK / NÆR GRENSE / OVER GRENSE) og
   sync-status (Synkronisert / Venter).
 - **Per skifte** – akkumulert fosforbelastning per skifte med progressbar mot P-grensen, per år.
@@ -84,6 +86,20 @@ brukt område. Kolonner A–H:
 > Inneholder Excel-filen allerede de forhåndslastede radene, bruk «Merk alt som synkronisert»
 > i Innstillinger for å unngå duplikater ved første synkronisering.
 
+## Deploy til GitHub Pages
+
+Appen er 100 % statisk og deployes automatisk til GitHub Pages via
+`.github/workflows/deploy.yml` (i repo-rota) ved hver push til `main`:
+
+1. Aktiver Pages én gang: repoets **Settings → Pages → Source: GitHub Actions**.
+2. Merge til `main` – workflowen bygger med `NEXT_PUBLIC_BASE_PATH=/honseri` og publiserer.
+3. Appen blir tilgjengelig på `https://<brukernavn>.github.io/honseri/`.
+4. Registrer denne URL-en (med avsluttende skråstrek) som redirect-URI i Azure –
+   den vises også nederst i Innstillinger-fanen.
+
+> Gratis GitHub Pages krever offentlig repo (eller GitHub Pro for privat). Selve appen
+> inneholder ingen gårdsdata – alt ligger lokalt på enheten og i din OneDrive.
+
 ## Installere som app på iPhone
 
 1. Åpne appens URL i Safari.
@@ -124,7 +140,8 @@ gjodselapp/
     │   └── types.ts
     └── store/
         ├── entries.ts       # Registreringer (Zustand + localStorage)
-        └── settings.ts      # Innstillinger (Zustand + localStorage)
+        ├── settings.ts      # Innstillinger (Zustand + localStorage)
+        └── skifter.ts       # Faste skifter med areal
 ```
 
 ## Forskriftskrav (§ 27)
