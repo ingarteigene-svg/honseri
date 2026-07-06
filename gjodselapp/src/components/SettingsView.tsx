@@ -6,7 +6,7 @@ import { useSettings } from '@/store/settings';
 import { useSkifter } from '@/store/skifter';
 import { useAuth, useSync } from './Providers';
 import { useToast } from './Toast';
-import { Field } from './ui';
+import { Field, SectionHeader } from './ui';
 import { appRedirectUri } from '@/lib/msal';
 
 /** Tallfelt med lokal tekst-tilstand slik at mellomtilstander («6,» osv.) fungerer. */
@@ -107,7 +107,7 @@ function SkifterAdmin() {
 
   return (
     <section className="space-y-3">
-      <h2 className="form-label">Faste skifter</h2>
+      <SectionHeader emoji="🌾" dot="bg-primary">Faste skifter</SectionHeader>
       <div className="card space-y-3">
         {sorted.map((s) => (
           <div key={s.id} className="flex items-center gap-2">
@@ -186,7 +186,7 @@ export default function SettingsView() {
     <div className="space-y-6">
       {/* Beregning */}
       <section className="space-y-3">
-        <h2 className="form-label">Beregning</h2>
+        <SectionHeader emoji="🧮" dot="bg-cyan">Beregning</SectionHeader>
         <div className="card space-y-4">
           <NumField
             label="Vekt per lass"
@@ -216,7 +216,7 @@ export default function SettingsView() {
 
       {/* OneDrive */}
       <section className="space-y-3">
-        <h2 className="form-label">OneDrive-tilkobling</h2>
+        <SectionHeader emoji="☁️" dot="bg-violet">OneDrive-tilkobling</SectionHeader>
         <div className="card space-y-4">
           <Field label="Azure Client ID">
             <input
@@ -280,7 +280,7 @@ export default function SettingsView() {
 
       {/* Synkronisering */}
       <section className="space-y-3">
-        <h2 className="form-label">Synkronisering</h2>
+        <SectionHeader emoji="🔄" dot="bg-warn">Synkronisering</SectionHeader>
         <div className="card space-y-3">
           <div className="text-sm">
             {entryCount} registreringer totalt ·{' '}

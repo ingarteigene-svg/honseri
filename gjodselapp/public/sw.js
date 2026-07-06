@@ -2,12 +2,10 @@
 // Alle stier bygges relativt til registreringens scope, slik at
 // samme fil fungerer både på rot (localhost) og understi (GitHub Pages).
 // Graph-/innloggingskall (annet origin) røres aldri.
-const CACHE = 'gjodsel-shell-v4';
-const SCOPE = self.registration.scope; // f.eks. https://…/honseri/
+const CACHE = 'gjodsel-shell-v5';
+const SCOPE = self.registration.scope; // f.eks. https://…/honseri/gjodsel/
 const shellUrl = (p) => new URL(p, SCOPE).toString();
-// egg.html vidaresender til egg/ – hønseri-appen (eggregistrering) med eigen service worker
-const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'egg.html', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
-const EGG_PREFIX = new URL('egg/', SCOPE).pathname;
+const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,8 +29,8 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
-  // Egg-appen har sin eigen service worker – ikkje rør noko under egg/
-  if (url.pathname.startsWith(EGG_PREFIX)) return;
+  // Berre stiar under eige scope (gjodsel/) – egg-appen på rota har eigen SW
+  if (!url.pathname.startsWith(new URL('', SCOPE).pathname)) return;
 
   if (req.mode === 'navigate') {
     // Sider: nettverk først, cache som offline-fallback

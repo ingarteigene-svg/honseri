@@ -23,9 +23,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className={`pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-medium text-white transition-opacity duration-200 ${
+        className={`pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-[10px] px-5 py-2.5 text-sm font-bold transition-opacity duration-200 ${
           visible ? 'opacity-100' : 'opacity-0'
-        } ${toast?.isError ? 'bg-danger' : 'bg-primary'}`}
+        } ${toast?.isError ? 'bg-danger text-white' : 'bg-primary text-[#0c111c]'}`}
       >
         {toast?.msg}
       </div>

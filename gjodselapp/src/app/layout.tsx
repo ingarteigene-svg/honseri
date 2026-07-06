@@ -24,7 +24,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover', // safe areas på iPhone (notch / Dynamic Island)
-  themeColor: '#3B6D11',
+  themeColor: '#0C111C',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

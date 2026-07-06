@@ -6,7 +6,7 @@ import { useSettings } from '@/store/settings';
 import { useSkifter } from '@/store/skifter';
 import { useAuth, useSync } from './Providers';
 import { useToast } from './Toast';
-import { Field, PBar, StatusChip } from './ui';
+import { Field, PBar, SectionHeader, StatTile, StatusChip } from './ui';
 import { accumulatedP, calcDelivery, round, statusFor } from '@/lib/calc';
 import { fmtNum, newId, todayISO } from '@/lib/format';
 import { Entry } from '@/lib/types';
@@ -101,6 +101,9 @@ export default function RegistrerForm() {
 
   return (
     <div className="space-y-4">
+      <SectionHeader emoji="📝" dot="bg-primary">
+        Ny levering
+      </SectionHeader>
       <div className="space-y-4">
         <Field label="Dato" required>
           <input
@@ -176,22 +179,28 @@ export default function RegistrerForm() {
       </div>
 
       {preview && previewStatus && (
-        <div className="card space-y-3">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <div className="text-lg font-bold">{fmtNum(preview.totalTonn)} t</div>
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted">Total mengde</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold">{fmtNum(preview.kgPerDaa)}</div>
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted">kg/daa</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold">{fmtNum(preview.pPerDaa)}</div>
-              <div className="text-[0.65rem] uppercase tracking-wide text-muted">kg P/daa</div>
-            </div>
+        <>
+          <SectionHeader emoji="🧮" dot="bg-cyan">
+            Beregning
+          </SectionHeader>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile
+              emoji="🚛"
+              label="Total mengde"
+              value={fmtNum(preview.totalTonn)}
+              unit="t"
+              tone="cyan"
+            />
+            <StatTile emoji="⚖️" label="Mengde" value={fmtNum(preview.kgPerDaa)} unit="kg/daa" />
+            <StatTile
+              emoji="🧪"
+              label="Tilført P"
+              value={fmtNum(preview.pPerDaa)}
+              unit="kg/daa"
+              tone="warn"
+            />
           </div>
-          <div className="space-y-1.5">
+          <div className="card space-y-1.5">
             <div className="flex items-center justify-between text-xs text-muted">
               <span>
                 {skifteNavn || 'Skiftet'} i {year}: {fmtNum(accAfter)} av{' '}
@@ -201,7 +210,7 @@ export default function RegistrerForm() {
             </div>
             <PBar value={accAfter} max={settings.pGrense} />
           </div>
-        </div>
+        </>
       )}
 
       <button className="btn-primary" onClick={save}>
