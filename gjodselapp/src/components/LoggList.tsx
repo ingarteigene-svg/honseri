@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useEntries } from '@/store/entries';
 import { useToast } from './Toast';
-import { StatusChip, SyncChip } from './ui';
+import { SectionHeader, StatusChip, SyncChip } from './ui';
 import { fmtNum, formatDate } from '@/lib/format';
 
 export default function LoggList() {
@@ -28,6 +28,9 @@ export default function LoggList() {
 
   return (
     <div className="space-y-3">
+      <SectionHeader emoji="📒" dot="bg-cyan">
+        Alle leveringer
+      </SectionHeader>
       {sorted.map((e) => (
         <div key={e.id} className="card space-y-2">
           <div className="flex items-start justify-between gap-2">

@@ -92,8 +92,10 @@ Appen er 100 % statisk og deployes automatisk til GitHub Pages via
 `.github/workflows/deploy.yml` (i repo-rota) ved hver push til `main`:
 
 1. Aktiver Pages én gang: repoets **Settings → Pages → Source: GitHub Actions**.
-2. Merge til `main` – workflowen bygger med `NEXT_PUBLIC_BASE_PATH=/honseri` og publiserer.
-3. Appen blir tilgjengelig på `https://<brukernavn>.github.io/honseri/`.
+2. Merge til `main` – workflowen bygger med `NEXT_PUBLIC_BASE_PATH=/honseri/gjodsel`,
+   legger egg-appen (`eggapp/`) på rota og publiserer.
+3. Egg-appen ligger på `https://<brukernavn>.github.io/honseri/` og Gjødseljournalen
+   på `https://<brukernavn>.github.io/honseri/gjodsel/`.
 4. Registrer denne URL-en (med avsluttende skråstrek) som redirect-URI i Azure –
    den vises også nederst i Innstillinger-fanen.
 

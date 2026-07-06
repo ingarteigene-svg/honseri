@@ -17,9 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: gjodselapp
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,12 +25,19 @@ jobs:
           cache: npm
           cache-dependency-path: gjodselapp/package-lock.json
       - run: npm ci
+        working-directory: gjodselapp
       - run: npm run build
+        working-directory: gjodselapp
         env:
-          NEXT_PUBLIC_BASE_PATH: /honseri
+          NEXT_PUBLIC_BASE_PATH: /honseri/gjodsel
+      - name: Sett sammen nettstedet (egg på rot, gjødsel under /gjodsel)
+        run: |
+          mkdir -p site/gjodsel
+          cp -r eggapp/. site/
+          cp -r gjodselapp/out/. site/gjodsel/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: gjodselapp/out
+          path: site
 
   deploy:
     needs: build

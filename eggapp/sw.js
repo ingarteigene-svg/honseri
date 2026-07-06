@@ -1,7 +1,7 @@
 /* Service worker for Hønseri-appen.
    Nettverk-først for sjølve appen (index.html) → du får alltid nyaste versjon
    når du er på nett, utan å reinstallere. Cache brukast som reserve når du er offline. */
-const CACHE = 'honseri-v12';
+const CACHE = 'honseri-v13';
 const ASSETS = [
   './',
   './index.html',
@@ -30,6 +30,8 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+  // Gjødseljournalen ligg under gjodsel/ med eigen service worker – ikkje rør
+  if (url.pathname.includes('/gjodsel/')) return;
   const isAppShell = req.mode === 'navigate'
     || url.pathname.endsWith('/')
     || url.pathname.endsWith('/index.html')

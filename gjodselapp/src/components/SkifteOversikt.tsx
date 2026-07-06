@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useEntries } from '@/store/entries';
 import { useSettings } from '@/store/settings';
-import { PBar, StatusChip } from './ui';
+import { PBar, SectionHeader, StatusChip } from './ui';
 import { round, statusFor } from '@/lib/calc';
 import { fmtNum } from '@/lib/format';
 
@@ -51,8 +51,14 @@ export default function SkifteOversikt() {
 
   return (
     <div className="space-y-3">
+      <SectionHeader emoji="🌾" dot="bg-primary">
+        P-belastning per skifte
+      </SectionHeader>
+
       <div className="flex items-center justify-between">
-        <div className="form-label">P-belastning per skifte</div>
+        <div className="text-xs text-dim">
+          Grense: {fmtNum(pGrense)} kg P/daa ({year})
+        </div>
         {years.length > 1 && (
           <select
             className="input-field w-auto py-1.5"
@@ -66,10 +72,6 @@ export default function SkifteOversikt() {
             ))}
           </select>
         )}
-      </div>
-
-      <div className="text-xs text-muted">
-        Grense: {fmtNum(pGrense)} kg P/daa ({year})
       </div>
 
       {rows.map((s) => {
