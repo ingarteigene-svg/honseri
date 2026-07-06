@@ -829,6 +829,16 @@ function enqueueSync(op) {
   flushQueue();
 }
 
+/* Legg heile den lokale loggen i sendekøa. Brukast når synk blir slått på,
+   slik at eksisterande registreringar blir lasta opp til fellesarket —
+   og som vern mot at eit tomt regneark skal viske ut lokal historikk. */
+function seedQueueFromLocal() {
+  const q = loadQueue();
+  const queued = new Set(q.filter(o => o.action === 'upsert' && o.entry).map(o => +o.entry.id));
+  loadEntries().forEach(e => { if (!queued.has(+e.id)) q.push({ action: 'upsert', entry: e }); });
+  storeQueue(q);
+}
+
 let flushing = false;
 async function flushQueue() {
   if (flushing || !syncUrl() || !navigator.onLine) return;
@@ -866,6 +876,14 @@ async function pullAll() {
   const r = await fetch(syncUrl() + '?all=1');
   const j = await r.json();
   if (!j || !j.ok || !Array.isArray(j.entries)) throw new Error('uventa svar');
+  if (j.entries.length === 0 && loadEntries().length > 0 && loadQueue().length === 0) {
+    // Tomt fellesark, men lokal historikk: last opp i staden for å viske ut
+    seedQueueFromLocal();
+    flushQueue();
+    localStorage.setItem(SYNC_LAST_KEY, new Date().toISOString());
+    updateSyncStatus();
+    return true;
+  }
   const map = new Map(j.entries.map(sanitizeEntry).filter(Boolean).map(e => [e.id, e]));
   // Endringar som enno ikkje er sende, vinn lokalt til dei er leverte
   loadQueue().forEach(op => {
@@ -908,7 +926,7 @@ function saveSyncUrl() {
   if (v && !/^https:\/\//.test(v)) { toast('Adressa må starte med https://', true); return; }
   try { localStorage.setItem(SYNC_URL_KEY, v); } catch(e) {}
   updateSyncStatus();
-  if (v) { toast('Synk aktivert', false, true); syncNow(); }
+  if (v) { seedQueueFromLocal(); toast('Synk aktivert', false, true); syncNow(); }
   else toast('Synk slått av');
 }
 function syncNow() {
