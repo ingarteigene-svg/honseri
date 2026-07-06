@@ -2,10 +2,11 @@
 // Alle stier bygges relativt til registreringens scope, slik at
 // samme fil fungerer både på rot (localhost) og understi (GitHub Pages).
 // Graph-/innloggingskall (annet origin) røres aldri.
-const CACHE = 'gjodsel-shell-v2';
+const CACHE = 'gjodsel-shell-v3';
 const SCOPE = self.registration.scope; // f.eks. https://…/honseri/
 const shellUrl = (p) => new URL(p, SCOPE).toString();
-const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
+// egg.html er den opprinnelege hønseri-appen (eggregistrering), publisert side om side
+const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'egg.html', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
