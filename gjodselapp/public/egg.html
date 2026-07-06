@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hønseri — Dagsregistrering</title>
+<style>
+  :root {
+    --bg: #FAF7F2;
+    --card: #FFFFFF;
+    --border: #E2DDD6;
+    --border-strong: #C8C2B9;
+    --text: #1C1A17;
+    --text-muted: #7A746C;
+    --accent: #5A7A4A;
+    --accent-light: #EAF2E3;
+    --accent-dark: #3D5733;
+    --amber: #C17D2A;
+    --amber-light: #FDF3E3;
+    --red: #C44B35;
+    --red-light: #FBF0EE;
+    --font: 'Georgia', serif;
+    --mono: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Header */
+  .header { border-bottom: 2px solid var(--text); padding-bottom: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-size: 1.5rem; font-weight: normal; letter-spacing: 0.12em; text-transform: uppercase; }
+  .header .subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.25rem; }
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border-strong); margin-bottom: 1.75rem; }
+  .tab { padding: 0.5rem 1.25rem; font-size: 0.8rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; color: var(--text-muted); background: transparent; }
+  .tab.active { background: var(--card); border-color: var(--border-strong); color: var(--text); border-bottom-color: var(--card); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* Form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 0.7rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  label .req { color: var(--red); }
+  input[type="number"], input[type="date"], textarea, select {
+    border: 1px solid var(--border-strong);
+    background: var(--card);
+    padding: 0.55rem 0.75rem;
+    font-size: 1rem;
+    font-family: var(--font);
+    color: var(--text);
+    border-radius: 2px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* Radio som knapper */
+  .radio-group { display: flex; gap: 0.5rem; }
+  .radio-btn { flex: 1; }
+  .radio-btn input { display: none; }
+  .radio-btn label {
+    display: block; text-align: center;
+    padding: 0.55rem 0.5rem;
+    border: 1px solid var(--border-strong);
+    background: var(--card);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    color: var(--text);
+    border-radius: 2px;
+    transition: all 0.12s;
+  }
+  .radio-btn input:checked + label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .radio-btn label:hover { border-color: var(--accent); }
+
+  /* Section divider */
+  .section-title {
+    font-size: 0.68rem; font-family: var(--mono); text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--text-muted);
+    padding: 0.5rem 0; border-top: 1px solid var(--border);
+    margin-top: 0.25rem; grid-column: 1 / -1;
+  }
+
+  /* Submit */
+  .btn-submit {
+    margin-top: 1.5rem; width: 100%;
+    background: var(--accent); color: #fff;
+    border: none; padding: 0.85rem;
+    font-size: 0.8rem; font-family: var(--mono);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .btn-submit:hover { background: var(--accent-dark); }
+  .btn-submit:disabled { background: var(--border-strong); cursor: not-allowed; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff;
+    padding: 0.65rem 1.5rem; font-family: var(--mono); font-size: 0.8rem;
+    letter-spacing: 0.08em; border-radius: 2px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Stats bar */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.75rem; }
+  .stat-box { background: var(--card); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 2px; }
+  .stat-box .s-label { font-size: 0.65rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .stat-box .s-val { font-size: 1.5rem; font-weight: normal; }
+  .stat-box .s-sub { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.15rem; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th {
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); font-weight: normal;
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-strong);
+    text-align: left; white-space: nowrap;
+  }
+  td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--accent-light); }
+  .badge { font-size: 0.68rem; font-family: var(--mono); padding: 0.15rem 0.5rem; border-radius: 2px; }
+  .badge-la { background: var(--amber-light); color: var(--amber); }
+  .badge-na { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-va { background: #F0EDF5; color: #6B5EA8; }
+
+  /* Delete btn */
+  .btn-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; font-family: var(--mono); padding: 0.15rem 0.4rem; border-radius: 2px; }
+  .btn-del:hover { background: var(--red-light); color: var(--red); }
+
+  /* Export btn */
+  .export-btn {
+    float: right; background: none; border: 1px solid var(--border-strong);
+    padding: 0.35rem 0.85rem; font-size: 0.68rem; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+    color: var(--text-muted); border-radius: 2px; margin-bottom: 0.75rem;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; }
+
+  /* Filter row */
+  .filter-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
+  .filter-row select { width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem; }
+  .filter-row label { font-size: 0.7rem; white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Hønseri</h1>
+      <div class="subtitle">Dagsregistrering</div>
+    </div>
+    <div id="today-display" style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);"></div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="showTab('form')">Ny registrering</div>
+    <div class="tab" onclick="showTab('log')">Logg</div>
+    <div class="tab" onclick="showTab('stats')">Oversikt</div>
+  </div>
+
+  <!-- TAB: FORM -->
+  <div id="tab-form">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Namn <span class="req">*</span></label>
+        <div class="radio-group">
+          <div class="radio-btn"><input type="radio" name="navn" id="r-la" value="Lars Andreas"><label for="r-la">Lars Andreas</label></div>
+          <div class="radio-btn"><input type="radio" name="navn" id="r-na" value="Inese"><label for="r-na">Inese</label></div>
+          <div class="radio-btn"><input type="radio" name="navn" id="r-va" value="Vasyl"><label for="r-va">Vasyl</label></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Dato <span class="req">*</span></label>
+        <input type="date" id="dato">
+      </div>
+      <div class="form-group">
+        <label>Antall egg plukka <span class="req">*</span></label>
+        <input type="number" id="egg" min="0" placeholder="0">
+      </div>
+
+      <div class="section-title">Brett til gardsbutikk</div>
+
+      <div class="form-group">
+        <label>Store brett <span class="req">*</span></label>
+        <input type="number" id="store" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Vanlege brett <span class="req">*</span></label>
+        <input type="number" id="vanlige" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Kartongar <span class="req">*</span></label>
+        <input type="number" id="kartonger" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Klink brett <span class="req">*</span></label>
+        <input type="number" id="klink" min="0" placeholder="0">
+      </div>
+
+      <div class="section-title">Pakking av paller</div>
+
+      <div class="form-group">
+        <label>200-paller (antall)</label>
+        <input type="number" id="pall200" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>228-paller (antall)</label>
+        <input type="number" id="pall228" min="0" placeholder="0">
+      </div>
+
+      <div class="section-title">Driftsdata</div>
+
+      <div class="form-group">
+        <label>For på siloen <span class="req">*</span></label>
+        <input type="number" id="for" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Vannmålar <span class="req">*</span></label>
+        <input type="number" id="vann" min="0" placeholder="0">
+      </div>
+
+      <div class="form-group full">
+        <label>Kommentar</label>
+        <textarea id="kommentar" placeholder="Ev. merknadar…"></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitForm()">Lagre registrering</button>
+  </div>
+
+  <!-- TAB: LOG -->
+  <div id="tab-log" style="display:none;">
+    <button class="export-btn" onclick="exportCSV()">Eksporter CSV</button>
+    <div class="filter-row">
+      <label>Filtrer:</label>
+      <select id="filter-person" onchange="renderLog()">
+        <option value="">Alle</option>
+        <option value="Lars Andreas">Lars Andreas</option>
+        <option value="Inese">Inese</option>
+        <option value="Vasyl">Vasyl</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dato</th><th>Namn</th><th>Egg</th><th>Store</th><th>Vanlege</th><th>Kartongar</th><th>Klink</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th><th>Kommentar</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="log-body"></tbody>
+      </table>
+      <div id="log-empty" class="empty-state" style="display:none;">Ingen registreringar endå.</div>
+    </div>
+  </div>
+
+  <!-- TAB: STATS -->
+  <div id="tab-stats" style="display:none;">
+    <div class="stats-row" id="stats-row"></div>
+    <div id="weekly-section"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'honseri_entries';
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; }
+}
+function saveEntries(arr) {
+  localStorage.setItem(KEY, JSON.stringify(arr));
+}
+
+function today() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+window.onload = function() {
+  document.getElementById('dato').value = today();
+  document.getElementById('today-display').textContent = formatDate(today());
+
+  const last = loadEntries();
+  if (last.length > 0) {
+    const lastPerson = last[last.length - 1].navn;
+    const radio = document.querySelector(`input[name="navn"][value="${lastPerson}"]`);
+    if (radio) radio.checked = true;
+  }
+};
+
+function showTab(tab) {
+  ['form','log','stats'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ['form','log','stats'][i] === tab);
+  });
+  if (tab === 'log') renderLog();
+  if (tab === 'stats') renderStats();
+}
+
+function submitForm() {
+  const navn = document.querySelector('input[name="navn"]:checked')?.value;
+  const dato = document.getElementById('dato').value;
+  const egg = document.getElementById('egg').value;
+  const store = document.getElementById('store').value;
+  const vanlige = document.getElementById('vanlige').value;
+  const kartonger = document.getElementById('kartonger').value;
+  const klink = document.getElementById('klink').value;
+  const forVal = document.getElementById('for').value;
+  const vann = document.getElementById('vann').value;
+  const pall200 = document.getElementById('pall200').value;
+  const pall228 = document.getElementById('pall228').value;
+  const kommentar = document.getElementById('kommentar').value.trim();
+
+  if (!navn || !dato || egg === '' || store === '' || vanlige === '' || kartonger === '' || klink === '' || forVal === '' || vann === '') {
+    toast('Fyll inn alle obligatoriske felt', true);
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    navn, dato,
+    egg: +egg, store: +store, vanlige: +vanlige,
+    kartonger: +kartonger, klink: +klink,
+    pall200: pall200 === '' ? 0 : +pall200,
+    pall228: pall228 === '' ? 0 : +pall228,
+    for: +forVal, vann: +vann,
+    kommentar
+  };
+
+  const entries = loadEntries();
+  entries.push(entry);
+  saveEntries(entries);
+
+  document.getElementById('egg').value = '';
+  document.getElementById('store').value = '';
+  document.getElementById('vanlige').value = '';
+  document.getElementById('kartonger').value = '';
+  document.getElementById('klink').value = '';
+  document.getElementById('pall200').value = '';
+  document.getElementById('pall228').value = '';
+  document.getElementById('for').value = '';
+  document.getElementById('vann').value = '';
+  document.getElementById('kommentar').value = '';
+  document.getElementById('dato').value = today();
+
+  toast('Registrering lagra ✓');
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--accent)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function badgeClass(navn) {
+  if (navn === 'Lars Andreas') return 'badge-la';
+  if (navn === 'Inese') return 'badge-na';
+  return 'badge-va';
+}
+
+function renderLog() {
+  const entries = loadEntries();
+  const filter = document.getElementById('filter-person').value;
+  const filtered = filter ? entries.filter(e => e.navn === filter) : entries;
+  const sorted = [...filtered].sort((a, b) => b.dato.localeCompare(a.dato));
+
+  const tbody = document.getElementById('log-body');
+  const empty = document.getElementById('log-empty');
+  tbody.innerHTML = '';
+
+  if (sorted.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  sorted.forEach(e => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="white-space:nowrap;font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
+      <td><span class="badge ${badgeClass(e.navn)}">${e.navn}</span></td>
+      <td><strong>${e.egg}</strong></td>
+      <td>${e.store}</td>
+      <td>${e.vanlige}</td>
+      <td>${e.kartonger}</td>
+      <td>${e.klink}</td>
+      <td>${e.pall200 || 0}</td>
+      <td>${e.pall228 || 0}</td>
+      <td>${e.for}</td>
+      <td>${e.vann}</td>
+      <td style="color:var(--text-muted);font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e.kommentar}">${e.kommentar || '—'}</td>
+      <td><button class="btn-del" onclick="deleteEntry(${e.id})">slett</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteEntry(id) {
+  if (!confirm('Slett denne registreringa?')) return;
+  const entries = loadEntries().filter(e => e.id !== id);
+  saveEntries(entries);
+  renderLog();
+  toast('Sletta');
+}
+
+function exportCSV() {
+  const entries = loadEntries();
+  if (!entries.length) { toast('Ingen data å eksportere', true); return; }
+  const header = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For','Vatn','Kommentar'];
+  const rows = entries.map(e => [e.dato, e.navn, e.egg, e.store, e.vanlige, e.kartonger, e.klink, e.pall200||0, e.pall228||0, e.for, e.vann, `"${(e.kommentar||'').replace(/"/g,'""')}"`]);
+  const csv = [header, ...rows].map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'hønseri_logg.csv'; a.click();
+}
+
+function renderStats() {
+  const entries = loadEntries();
+  const row = document.getElementById('stats-row');
+  const weekly = document.getElementById('weekly-section');
+
+  if (!entries.length) {
+    row.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Ingen data endå.</div>';
+    weekly.innerHTML = '';
+    return;
+  }
+
+  const totalEgg = entries.reduce((s, e) => s + e.egg, 0);
+  const avgEgg = Math.round(totalEgg / entries.length);
+  const lastEntry = [...entries].sort((a, b) => b.dato.localeCompare(a.dato))[0];
+  const days = new Set(entries.map(e => e.dato)).size;
+
+  row.innerHTML = `
+    <div class="stat-box">
+      <div class="s-label">Totalt egg</div>
+      <div class="s-val">${totalEgg.toLocaleString('no')}</div>
+      <div class="s-sub">${days} registreringsdagar</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Snitt per dag</div>
+      <div class="s-val">${avgEgg}</div>
+      <div class="s-sub">egg per registrering</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Siste registrering</div>
+      <div class="s-val" style="font-size:1.1rem;padding-top:0.2rem;">${formatDate(lastEntry.dato)}</div>
+      <div class="s-sub">${lastEntry.egg} egg — ${lastEntry.navn}</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Antal postar</div>
+      <div class="s-val">${entries.length}</div>
+      <div class="s-sub">totalt i databasen</div>
+    </div>
+  `;
+
+  // Last 14 days breakdown
+  const sorted = [...entries].sort((a, b) => b.dato.localeCompare(a.dato)).slice(0, 14);
+  let tableHTML = `
+    <div style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:0.5rem;">
+      <div style="font-size:0.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:0.75rem;">Siste 14 registreringar</div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Dato</th><th>Namn</th><th>Egg</th><th>Butikk (store+vanlege+kart.+klink)</th><th>200-pall</th><th>228-pall</th><th>For</th><th>Vatn</th>
+        </tr></thead><tbody>
+  `;
+  sorted.forEach(e => {
+    const butikk = e.store + e.vanlige + e.kartonger + e.klink;
+    tableHTML += `<tr>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
+      <td><span class="badge ${badgeClass(e.navn)}">${e.navn}</span></td>
+      <td><strong>${e.egg}</strong></td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${e.store} + ${e.vanlige} + ${e.kartonger} + ${e.klink} = ${butikk}</td>
+      <td>${e.pall200 || 0}</td>
+      <td>${e.pall228 || 0}</td>
+      <td>${e.for}</td>
+      <td>${e.vann}</td>
+    </tr>`;
+  });
+  tableHTML += '</tbody></table></div></div>';
+  weekly.innerHTML = tableHTML;
+}
+</script>
+</body>
+</html>
