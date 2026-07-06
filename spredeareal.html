@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spredeareal — Hønsegjødsel</title>
+<style>
+  :root {
+    --bg: #FAF7F2;
+    --card: #FFFFFF;
+    --border: #E5DED4;
+    --border-strong: #C9BFAE;
+    --text: #1C1A17;
+    --text-muted: #7A746C;
+    --accent: #7B5E3B;
+    --accent-light: #F1E9DC;
+    --accent-dark: #574127;
+    --amber: #C17D2A;
+    --amber-light: #FDF3E3;
+    --red: #C44B35;
+    --red-light: #FBF0EE;
+    --font: 'Georgia', serif;
+    --mono: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Header */
+  .header { border-bottom: 2px solid var(--text); padding-bottom: 1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header h1 { font-size: 1.5rem; font-weight: normal; letter-spacing: 0.12em; text-transform: uppercase; }
+  .header .subtitle { font-size: 0.75rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.25rem; }
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border-strong); margin-bottom: 1.75rem; }
+  .tab { padding: 0.5rem 1.25rem; font-size: 0.8rem; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; color: var(--text-muted); background: transparent; }
+  .tab.active { background: var(--card); border-color: var(--border-strong); color: var(--text); border-bottom-color: var(--card); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* Form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 0.7rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  label .req { color: var(--red); }
+  input[type="number"], input[type="date"], input[type="text"], textarea, select {
+    border: 1px solid var(--border-strong);
+    background: var(--card);
+    padding: 0.55rem 0.75rem;
+    font-size: 1rem;
+    font-family: var(--font);
+    color: var(--text);
+    border-radius: 2px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* Radio som knapper */
+  .radio-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .radio-btn { flex: 1; min-width: 90px; }
+  .radio-btn input { display: none; }
+  .radio-btn label {
+    display: block; text-align: center;
+    padding: 0.55rem 0.5rem;
+    border: 1px solid var(--border-strong);
+    background: var(--card);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    text-transform: none;
+    color: var(--text);
+    border-radius: 2px;
+    transition: all 0.12s;
+  }
+  .radio-btn input:checked + label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .radio-btn label:hover { border-color: var(--accent); }
+
+  /* Section divider */
+  .section-title {
+    font-size: 0.68rem; font-family: var(--mono); text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--text-muted);
+    padding: 0.5rem 0; border-top: 1px solid var(--border);
+    margin-top: 0.25rem; grid-column: 1 / -1;
+  }
+
+  /* Submit */
+  .btn-submit {
+    margin-top: 1.5rem; width: 100%;
+    background: var(--accent); color: #fff;
+    border: none; padding: 0.85rem;
+    font-size: 0.8rem; font-family: var(--mono);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .btn-submit:hover { background: var(--accent-dark); }
+  .btn-submit:disabled { background: var(--border-strong); cursor: not-allowed; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff;
+    padding: 0.65rem 1.5rem; font-family: var(--mono); font-size: 0.8rem;
+    letter-spacing: 0.08em; border-radius: 2px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Stats bar */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.75rem; }
+  .stat-box { background: var(--card); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 2px; }
+  .stat-box .s-label { font-size: 0.65rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.3rem; }
+  .stat-box .s-val { font-size: 1.5rem; font-weight: normal; }
+  .stat-box .s-sub { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-top: 0.15rem; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th {
+    font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); font-weight: normal;
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-strong);
+    text-align: left; white-space: nowrap;
+  }
+  td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--accent-light); }
+
+  /* Delete btn */
+  .btn-del { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; font-family: var(--mono); padding: 0.15rem 0.4rem; border-radius: 2px; }
+  .btn-del:hover { background: var(--red-light); color: var(--red); }
+
+  /* Export btn */
+  .export-btn {
+    float: right; background: none; border: 1px solid var(--border-strong);
+    padding: 0.35rem 0.85rem; font-size: 0.68rem; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+    color: var(--text-muted); border-radius: 2px; margin-bottom: 0.75rem; margin-left: 0.5rem;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; }
+
+  /* Filter row */
+  .filter-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+  .filter-row select { width: auto; font-size: 0.8rem; padding: 0.35rem 0.6rem; }
+  .filter-row label { font-size: 0.7rem; white-space: nowrap; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .header { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Spredeareal</h1>
+      <div class="subtitle">Spreiing av hønsegjødsel</div>
+    </div>
+    <div id="today-display" style="font-family:var(--mono);font-size:0.78rem;color:var(--text-muted);"></div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="showTab('form')">Ny registrering</div>
+    <div class="tab" onclick="showTab('log')">Logg</div>
+    <div class="tab" onclick="showTab('stats')">Oversikt</div>
+  </div>
+
+  <!-- TAB: FORM -->
+  <div id="tab-form">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Dato <span class="req">*</span></label>
+        <input type="date" id="dato">
+      </div>
+      <div class="form-group">
+        <label>Skifte / teig <span class="req">*</span></label>
+        <input type="text" id="skifte" list="skifte-list" placeholder="t.d. Heimejordet" autocomplete="off">
+        <datalist id="skifte-list"></datalist>
+      </div>
+
+      <div class="section-title">Areal og vekst</div>
+
+      <div class="form-group">
+        <label>Areal spreidd (daa) <span class="req">*</span></label>
+        <input type="number" id="areal" min="0" step="0.1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Vekst / kultur</label>
+        <select id="vekst">
+          <option value="Eng / gras">Eng / gras</option>
+          <option value="Beite">Beite</option>
+          <option value="Bygg">Bygg</option>
+          <option value="Havre">Havre</option>
+          <option value="Kveite">Kveite</option>
+          <option value="Potet">Potet</option>
+          <option value="Grønfôr">Grønfôr</option>
+          <option value="Open åker">Open åker</option>
+          <option value="Anna">Anna</option>
+        </select>
+      </div>
+
+      <div class="section-title">Hønsegjødsel</div>
+
+      <div class="form-group">
+        <label>Mengde <span class="req">*</span></label>
+        <input type="number" id="mengde" min="0" step="0.1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Eining</label>
+        <div class="radio-group">
+          <div class="radio-btn"><input type="radio" name="eining" id="e-tonn" value="tonn" checked><label for="e-tonn">tonn</label></div>
+          <div class="radio-btn"><input type="radio" name="eining" id="e-m3" value="m³"><label for="e-m3">m³</label></div>
+          <div class="radio-btn"><input type="radio" name="eining" id="e-lass" value="lass"><label for="e-lass">lass</label></div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label>Spreiemetode</label>
+        <div class="radio-group">
+          <div class="radio-btn"><input type="radio" name="metode" id="m-brei" value="Breispreiing"><label for="m-brei">Breispreiing</label></div>
+          <div class="radio-btn"><input type="radio" name="metode" id="m-nedmold" value="Nedmolding"><label for="m-nedmold">Nedmolding</label></div>
+          <div class="radio-btn"><input type="radio" name="metode" id="m-nedfell" value="Nedfelling"><label for="m-nedfell">Nedfelling</label></div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label>Kommentar</label>
+        <textarea id="kommentar" placeholder="Ev. merknadar — ver, nedmolda innan… t."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitForm()">Lagre registrering</button>
+  </div>
+
+  <!-- TAB: LOG -->
+  <div id="tab-log" style="display:none;">
+    <button class="export-btn" onclick="exportCSV()">Eksporter CSV</button>
+    <div class="filter-row">
+      <label>Filtrer skifte:</label>
+      <select id="filter-skifte" onchange="renderLog()">
+        <option value="">Alle</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Dato</th><th>Skifte</th><th>Areal (daa)</th><th>Vekst</th><th>Mengde</th><th>Per daa</th><th>Metode</th><th>Kommentar</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="log-body"></tbody>
+      </table>
+      <div id="log-empty" class="empty-state" style="display:none;">Ingen registreringar endå.</div>
+    </div>
+  </div>
+
+  <!-- TAB: STATS -->
+  <div id="tab-stats" style="display:none;">
+    <div class="filter-row">
+      <label>År:</label>
+      <select id="stats-year" onchange="renderStats()">
+        <option value="">Alle år</option>
+      </select>
+    </div>
+    <div class="stats-row" id="stats-row"></div>
+    <div id="skifte-section"></div>
+    <div id="recent-section"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'spredeareal_entries';
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; }
+}
+function saveEntries(arr) {
+  localStorage.setItem(KEY, JSON.stringify(arr));
+}
+
+function today() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function fmtNum(n) {
+  return (Math.round(n * 100) / 100).toLocaleString('no');
+}
+
+window.onload = function() {
+  document.getElementById('dato').value = today();
+  document.getElementById('today-display').textContent = formatDate(today());
+  refreshSkifteList();
+};
+
+function refreshSkifteList() {
+  const entries = loadEntries();
+  const skifter = [...new Set(entries.map(e => e.skifte).filter(Boolean))].sort();
+  const dl = document.getElementById('skifte-list');
+  dl.innerHTML = skifter.map(s => `<option value="${s.replace(/"/g,'&quot;')}">`).join('');
+  const filt = document.getElementById('filter-skifte');
+  const cur = filt.value;
+  filt.innerHTML = '<option value="">Alle</option>' + skifter.map(s => `<option value="${s.replace(/"/g,'&quot;')}">${s}</option>`).join('');
+  filt.value = cur;
+}
+
+function showTab(tab) {
+  ['form','log','stats'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ['form','log','stats'][i] === tab);
+  });
+  if (tab === 'log') { refreshSkifteList(); renderLog(); }
+  if (tab === 'stats') renderStats();
+}
+
+function submitForm() {
+  const dato = document.getElementById('dato').value;
+  const skifte = document.getElementById('skifte').value.trim();
+  const areal = document.getElementById('areal').value;
+  const vekst = document.getElementById('vekst').value;
+  const mengde = document.getElementById('mengde').value;
+  const eining = document.querySelector('input[name="eining"]:checked')?.value || 'tonn';
+  const metode = document.querySelector('input[name="metode"]:checked')?.value || '';
+  const kommentar = document.getElementById('kommentar').value.trim();
+
+  if (!dato || !skifte || areal === '' || mengde === '') {
+    toast('Fyll inn alle obligatoriske felt', true);
+    return;
+  }
+
+  const entry = {
+    id: Date.now(),
+    dato, skifte,
+    areal: +areal, vekst,
+    mengde: +mengde, eining,
+    metode, kommentar
+  };
+
+  const entries = loadEntries();
+  entries.push(entry);
+  saveEntries(entries);
+
+  document.getElementById('skifte').value = '';
+  document.getElementById('areal').value = '';
+  document.getElementById('mengde').value = '';
+  document.getElementById('kommentar').value = '';
+  document.querySelectorAll('input[name="metode"]').forEach(r => r.checked = false);
+  document.getElementById('dato').value = today();
+  refreshSkifteList();
+
+  toast('Registrering lagra ✓');
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = isError ? 'var(--red)' : 'var(--accent)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function renderLog() {
+  const entries = loadEntries();
+  const fS = document.getElementById('filter-skifte').value;
+  let filtered = fS ? entries.filter(e => e.skifte === fS) : entries;
+  const sorted = [...filtered].sort((a, b) => b.dato.localeCompare(a.dato) || b.id - a.id);
+
+  const tbody = document.getElementById('log-body');
+  const empty = document.getElementById('log-empty');
+  tbody.innerHTML = '';
+
+  if (sorted.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  sorted.forEach(e => {
+    const perDaa = e.areal > 0 ? fmtNum(e.mengde / e.areal) + ' ' + e.eining + '/daa' : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="white-space:nowrap;font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
+      <td><strong>${e.skifte}</strong></td>
+      <td>${fmtNum(e.areal)}</td>
+      <td style="font-size:0.78rem;">${e.vekst || '—'}</td>
+      <td style="white-space:nowrap;">${fmtNum(e.mengde)} ${e.eining}</td>
+      <td style="font-family:var(--mono);font-size:0.76rem;white-space:nowrap;">${perDaa}</td>
+      <td style="font-size:0.78rem;">${e.metode || '—'}</td>
+      <td style="color:var(--text-muted);font-size:0.78rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(e.kommentar||'').replace(/"/g,'&quot;')}">${e.kommentar || '—'}</td>
+      <td><button class="btn-del" onclick="deleteEntry(${e.id})">slett</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function deleteEntry(id) {
+  if (!confirm('Slett denne registreringa?')) return;
+  const entries = loadEntries().filter(e => e.id !== id);
+  saveEntries(entries);
+  refreshSkifteList();
+  renderLog();
+  toast('Sletta');
+}
+
+function exportCSV() {
+  const entries = loadEntries();
+  if (!entries.length) { toast('Ingen data å eksportere', true); return; }
+  const header = ['Dato','Skifte','Areal (daa)','Vekst','Mengde','Eining','Per daa','Spreiemetode','Kommentar'];
+  const rows = entries.map(e => {
+    const perDaa = e.areal > 0 ? (Math.round(e.mengde / e.areal * 100) / 100) : '';
+    return [e.dato, e.skifte, e.areal, e.vekst || '', e.mengde, e.eining, perDaa, e.metode || '', `"${(e.kommentar||'').replace(/"/g,'""')}"`];
+  });
+  const csv = [header, ...rows].map(r => r.join(';')).join('\n');
+  const blob = new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'spredeareal_logg.csv'; a.click();
+}
+
+function renderStats() {
+  const allEntries = loadEntries();
+
+  // year filter setup
+  const yearSel = document.getElementById('stats-year');
+  const years = [...new Set(allEntries.map(e => e.dato.slice(0,4)))].sort().reverse();
+  const curYear = yearSel.value;
+  yearSel.innerHTML = '<option value="">Alle år</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  yearSel.value = curYear;
+
+  const entries = curYear ? allEntries.filter(e => e.dato.slice(0,4) === curYear) : allEntries;
+
+  const row = document.getElementById('stats-row');
+  const skifteSec = document.getElementById('skifte-section');
+  const recentSec = document.getElementById('recent-section');
+
+  if (!entries.length) {
+    row.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Ingen data endå.</div>';
+    skifteSec.innerHTML = '';
+    recentSec.innerHTML = '';
+    return;
+  }
+
+  const totalAreal = entries.reduce((s, e) => s + e.areal, 0);
+  const uniqueSkifter = new Set(entries.map(e => e.skifte)).size;
+  const lastEntry = [...entries].sort((a, b) => b.dato.localeCompare(a.dato) || b.id - a.id)[0];
+
+  // mengde per eining
+  const perEining = {};
+  entries.forEach(e => { perEining[e.eining] = (perEining[e.eining] || 0) + e.mengde; });
+  const mengdeStr = Object.entries(perEining).map(([u, v]) => `${fmtNum(v)} ${u}`).join(' · ') || '—';
+
+  row.innerHTML = `
+    <div class="stat-box">
+      <div class="s-label">Areal spreidd</div>
+      <div class="s-val">${fmtNum(totalAreal)}</div>
+      <div class="s-sub">daa totalt (sum av turar)</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Hønsegjødsel</div>
+      <div class="s-val" style="font-size:1.15rem;padding-top:0.35rem;">${mengdeStr}</div>
+      <div class="s-sub">samla utkøyrt</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Skifte brukt</div>
+      <div class="s-val">${uniqueSkifter}</div>
+      <div class="s-sub">ulike teigar</div>
+    </div>
+    <div class="stat-box">
+      <div class="s-label">Siste registrering</div>
+      <div class="s-val" style="font-size:1.1rem;padding-top:0.2rem;">${formatDate(lastEntry.dato)}</div>
+      <div class="s-sub">${lastEntry.skifte} — ${fmtNum(lastEntry.areal)} daa</div>
+    </div>
+  `;
+
+  // Per skifte aggregation
+  const bySkifte = {};
+  entries.forEach(e => {
+    if (!bySkifte[e.skifte]) bySkifte[e.skifte] = { areal: 0, turar: 0, eining: {} };
+    const s = bySkifte[e.skifte];
+    s.areal += e.areal;
+    s.turar += 1;
+    s.eining[e.eining] = (s.eining[e.eining] || 0) + e.mengde;
+  });
+  const skifteRows = Object.entries(bySkifte).sort((a, b) => b[1].areal - a[1].areal);
+
+  let sHTML = `
+    <div style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:0.5rem;">
+      <div style="font-size:0.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:0.75rem;">Per skifte</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Skifte</th><th>Turar</th><th>Areal spreidd (daa)</th><th>Mengde</th></tr></thead><tbody>
+  `;
+  skifteRows.forEach(([navn, s]) => {
+    const meng = Object.entries(s.eining).map(([u, v]) => `${fmtNum(v)} ${u}`).join(' · ');
+    sHTML += `<tr>
+      <td><strong>${navn}</strong></td>
+      <td>${s.turar}</td>
+      <td>${fmtNum(s.areal)}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${meng}</td>
+    </tr>`;
+  });
+  sHTML += '</tbody></table></div></div>';
+  skifteSec.innerHTML = sHTML;
+
+  // Last 14 registrations
+  const recent = [...entries].sort((a, b) => b.dato.localeCompare(a.dato) || b.id - a.id).slice(0, 14);
+  let rHTML = `
+    <div style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1.25rem;">
+      <div style="font-size:0.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:0.75rem;">Siste 14 registreringar</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Dato</th><th>Skifte</th><th>Areal</th><th>Vekst</th><th>Mengde</th><th>Per daa</th></tr></thead><tbody>
+  `;
+  recent.forEach(e => {
+    const perDaa = e.areal > 0 ? fmtNum(e.mengde / e.areal) + ' ' + e.eining + '/daa' : '—';
+    rHTML += `<tr>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${formatDate(e.dato)}</td>
+      <td><strong>${e.skifte}</strong></td>
+      <td>${fmtNum(e.areal)} daa</td>
+      <td style="font-size:0.78rem;">${e.vekst || '—'}</td>
+      <td style="white-space:nowrap;">${fmtNum(e.mengde)} ${e.eining}</td>
+      <td style="font-family:var(--mono);font-size:0.76rem;">${perDaa}</td>
+    </tr>`;
+  });
+  rHTML += '</tbody></table></div></div>';
+  recentSec.innerHTML = rHTML;
+}
+</script>
+</body>
+</html>
