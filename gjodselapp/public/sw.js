@@ -2,10 +2,10 @@
 // Alle stier bygges relativt til registreringens scope, slik at
 // samme fil fungerer både på rot (localhost) og understi (GitHub Pages).
 // Graph-/innloggingskall (annet origin) røres aldri.
-const CACHE = 'gjodsel-shell-v5';
+const CACHE = 'gjodsel-shell-v6';
 const SCOPE = self.registration.scope; // f.eks. https://…/honseri/gjodsel/
 const shellUrl = (p) => new URL(p, SCOPE).toString();
-const SHELL = ['', 'logg', 'skifter', 'innstillinger', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
+const SHELL = ['', 'logg/', 'skifter/', 'innstillinger/', 'manifest.json', 'icon-192.png', 'icon-512.png'].map(shellUrl);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

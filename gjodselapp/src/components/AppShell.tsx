@@ -70,7 +70,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="mx-auto grid max-w-xl grid-cols-4">
           {NAV.map(({ href, label, emoji }) => {
-            const active = pathname === href;
+            // Robust match med og uten avsluttende skråstrek (trailingSlash)
+            const norm = (p: string) => p.replace(/\/+$/, '') || '/';
+            const active = norm(pathname ?? '/') === norm(href);
             return (
               <Link
                 key={href}
