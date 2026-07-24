@@ -921,9 +921,27 @@ function updateSyncStatus() {
   const lastTxt = last ? formatDate(last.slice(0,10)) + ' ' + last.slice(11,16) : 'aldri';
   el.innerHTML = `Synk er <span class="ok">på</span> · sist henta: ${lastTxt} · i kø: ${q}`;
 }
+/* Outlook/Teams pakkar lenkjer inn i SafeLinks (…safelinks.protection.outlook.com
+   ?url=…). Pakk ut den eigentlege adressa automatisk, elles feilar synken. */
+function cleanSyncUrl(v) {
+  for (let i = 0; i < 3; i++) {
+    try {
+      const u = new URL(v);
+      if (/\.safelinks\.protection\.outlook\.com$/i.test(u.hostname)) {
+        const inner = u.searchParams.get('url');
+        if (inner) { v = inner; continue; }
+      }
+    } catch (e) {}
+    break;
+  }
+  return v;
+}
+
 function saveSyncUrl() {
-  const v = document.getElementById('sync-url').value.trim();
+  const v = cleanSyncUrl(document.getElementById('sync-url').value.trim());
   if (v && !/^https:\/\//.test(v)) { toast('Adressa må starte med https://', true); return; }
+  if (v && !/^https:\/\/script\.google\.com\//.test(v)) { toast('Dette ser ikkje ut som ei Apps Script-adresse (script.google.com)', true); return; }
+  document.getElementById('sync-url').value = v;
   try { localStorage.setItem(SYNC_URL_KEY, v); } catch(e) {}
   updateSyncStatus();
   if (v) { seedQueueFromLocal(); toast('Synk aktivert', false, true); syncNow(); }
