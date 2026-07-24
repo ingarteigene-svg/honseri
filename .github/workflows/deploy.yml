@@ -35,6 +35,18 @@ jobs:
           mkdir -p site/gjodsel
           cp -r eggapp/. site/
           cp -r gjodselapp/out/. site/gjodsel/
+      - name: Verifiser nettstedet før publisering
+        run: |
+          set -e
+          for f in index.html sw.js manifest.webmanifest icons/icon-192.png \
+                   gjodsel/index.html gjodsel/sw.js gjodsel/manifest.json \
+                   gjodsel/logg/index.html gjodsel/skifter/index.html \
+                   gjodsel/innstillinger/index.html; do
+            test -f "site/$f" || { echo "MANGLER: site/$f"; exit 1; }
+          done
+          grep -q 'honseri-v' site/sw.js
+          grep -q 'gjodsel-shell-v' site/gjodsel/sw.js
+          echo "Alle nøkkelfiler på plass ✓"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
