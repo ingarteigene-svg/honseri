@@ -250,6 +250,9 @@
   .stat.t-amber .v { color: var(--amber); }
   .stat.t-red   { background: linear-gradient(170deg, var(--red-soft), transparent 65%), var(--surface); border-color: rgba(229,103,90,0.25); }
   .stat.t-red .v { color: var(--red); }
+  .stat.t-violet { background: linear-gradient(170deg, var(--violet-soft), transparent 65%), var(--surface); border-color: rgba(155,140,224,0.25); }
+  .stat.t-violet .v { color: var(--violet); }
+  .stat .v .u { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); margin-left: 2px; }
 
   /* ---------- Graf (egg-utvikling) ---------- */
   .chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
@@ -567,7 +570,7 @@
      pall200, pall228, for, vann, dode, kommentar }
    ============================================================ */
 
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.5';
 const KEY = 'honseri_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -1170,12 +1173,61 @@ function deleteEntry(id) {
 }
 
 /* ---------- Oversikt ---------- */
+/* ---------- Siste Nortura-avregning (oppdaterast manuelt ved ny avregning) ---------- */
+const AVREGNING = {
+  nr: '5108241579',
+  hentedato: '2026-08-05',
+  utbetalt: '2026-08-17',
+  antall: 43200,
+  vektKg: 2562.95,
+  bruttoKr: 76764.01,
+  eksMvaKr: 66751.33,
+  snittprisEgg: 1.55,     // kr/egg inkl. tillegg, eks. MVA (66 751,33 / 43 200)
+  snittvektG: 59.3,
+  mlSnittvektG: 59.6,
+  tilleggKr: 3411.74,
+  hittilBruttoKr: 1162076.93,
+  // Størrelsesmiks etter antall; småpostar (XL 49, SI 26, Blod 16, Knekk 27) er samla i Øvrig
+  miks: [
+    { k: 'M',      n: 33858, c: '#57A047' },
+    { k: 'L',      n: 6520,  c: '#C4862B' },
+    { k: 'S',      n: 1569,  c: '#8170CC' },
+    { k: 'Skitne', n: 495,   c: '#3D7DB3' },
+    { k: 'Klink',  n: 640,   c: '#B3506B' },
+    { k: 'Øvrig',  n: 118,   c: '#6E7887' }
+  ]
+};
+
+function avregningHtml() {
+  const a = AVREGNING;
+  const nf = v => Math.round(v).toLocaleString('no');
+  const total = a.miks.reduce((s,m) => s + m.n, 0);
+  const parts = a.miks.map(m => ({...m, pct: m.n/total*100}));
+  return `
+  <div class="section-label c-cyan"><span class="emo">🧾</span><span>Siste avregning</span><span class="hint">Nortura · henta ${formatDate(a.hentedato)}</span></div>
+  <div class="stat-grid">
+    <div class="stat t-cyan"><div class="emo">💰</div><div class="l">Snittpris per egg</div><div class="v">${a.snittprisEgg.toLocaleString('no',{minimumFractionDigits:2})}<span class="u">kr</span></div><div class="s">inkl. tillegg · eks. MVA</div></div>
+    <div class="stat t-green"><div class="emo">⚖️</div><div class="l">Snittvekt per egg</div><div class="v">${a.snittvektG.toLocaleString('no',{minimumFractionDigits:1})}<span class="u">g</span></div><div class="s">M+L: ${a.mlSnittvektG.toLocaleString('no',{minimumFractionDigits:1})} g</div></div>
+    <div class="stat t-amber"><div class="emo">🥚</div><div class="l">Levert</div><div class="v">${nf(a.antall)}</div><div class="s">${nf(a.vektKg)} kg · tillegg ${nf(a.tilleggKr)} kr</div></div>
+    <div class="stat t-violet"><div class="emo">🏦</div><div class="l">Bruttobeløp</div><div class="v">${nf(a.bruttoKr)}<span class="u">kr</span></div><div class="s">i år: ${nf(a.hittilBruttoKr)} kr</div></div>
+  </div>
+  <div class="card">
+    <div class="chart-head">
+      <div class="chart-sub">Størrelsesmiks (antall)</div>
+      <div class="chart-badge">${nf(a.antall)} egg</div>
+    </div>
+    <div class="mix-bar">${parts.map(p => `<div style="width:${p.pct}%;background:${p.c};"></div>`).join('')}</div>
+    <div class="mix-legend">${parts.map(p =>
+      `<span class="mi"><span class="dot" style="background:${p.c};"></span>${p.k}<b>${p.pct.toLocaleString('no',{maximumFractionDigits:1})} %</b></span>`).join('')}</div>
+  </div>`;
+}
+
 function renderStats() {
   const entries = loadEntries();
   const root = document.getElementById('stats-content');
 
   if (!entries.length) {
-    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">${tno('empty_stats_t')}</div><div class="s">${tno('empty_stats_s')}</div></div>`;
+    root.innerHTML = `<div class="empty"><div class="ico">📊</div><div class="t">${tno('empty_stats_t')}</div><div class="s">${tno('empty_stats_s')}</div></div>` + avregningHtml();
     return;
   }
 
@@ -1231,6 +1283,7 @@ function renderStats() {
     </div>`;
   }
 
+  html += avregningHtml();
   root.innerHTML = html;
   attachTrendPointer(series);
 }
