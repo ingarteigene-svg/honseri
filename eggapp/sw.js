@@ -30,8 +30,8 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  // Gjødseljournalen ligg under gjodsel/ med eigen service worker – ikkje rør
-  if (url.pathname.includes('/gjodsel/')) return;
+  // Gjødseljournalen og Eggly ligg i eigne undermapper – ikkje rør
+  if (url.pathname.includes('/gjodsel/') || url.pathname.includes('/eggly/')) return;
   const isAppShell = req.mode === 'navigate'
     || url.pathname.endsWith('/')
     || url.pathname.endsWith('/index.html')

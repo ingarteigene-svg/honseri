@@ -30,18 +30,20 @@ jobs:
         working-directory: gjodselapp
         env:
           NEXT_PUBLIC_BASE_PATH: /honseri/gjodsel
-      - name: Sett sammen nettstedet (egg på rot, gjødsel under /gjodsel)
+      - name: Sett sammen nettstedet (egg på rot, gjødsel og eggly i undermapper)
         run: |
-          mkdir -p site/gjodsel
+          mkdir -p site/gjodsel site/eggly
           cp -r eggapp/. site/
           cp -r gjodselapp/out/. site/gjodsel/
+          cp -r eggly/. site/eggly/
       - name: Verifiser nettstedet før publisering
         run: |
           set -e
           for f in index.html sw.js manifest.webmanifest icons/icon-192.png \
                    gjodsel/index.html gjodsel/sw.js gjodsel/manifest.json \
                    gjodsel/logg/index.html gjodsel/skifter/index.html \
-                   gjodsel/innstillinger/index.html; do
+                   gjodsel/innstillinger/index.html \
+                   eggly/index.html eggly/manifest.webmanifest eggly/icon-512.png; do
             test -f "site/$f" || { echo "MANGLER: site/$f"; exit 1; }
           done
           grep -q 'honseri-v' site/sw.js
