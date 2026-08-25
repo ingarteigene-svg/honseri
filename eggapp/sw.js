@@ -1,7 +1,7 @@
 /* Service worker for Hønseri-appen.
    Nettverk-først for sjølve appen (index.html) → du får alltid nyaste versjon
    når du er på nett, utan å reinstallere. Cache brukast som reserve når du er offline. */
-const CACHE = 'honseri-v15';
+const CACHE = 'honseri-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -39,13 +39,16 @@ self.addEventListener('fetch', event => {
 
   if (isAppShell) {
     // Nettverk først: hent nyaste app, oppdater cache. Fall tilbake til cache offline.
+    // Kvar side blir cacha under si eiga adresse (eggly/ ligg under same scope
+    // og må ikkje overskrive rot-appen sin offline-kopi).
     event.respondWith(
       fetch(req).then(resp => {
         const clone = resp.clone();
-        caches.open(CACHE).then(cache => cache.put('./index.html', clone));
+        caches.open(CACHE).then(cache => cache.put(req, clone));
         return resp;
       }).catch(() =>
-        caches.match('./index.html').then(r => r || caches.match('./'))
+        caches.match(req).then(r => r
+          || caches.match('./index.html').then(r2 => r2 || caches.match('./')))
       )
     );
     return;
