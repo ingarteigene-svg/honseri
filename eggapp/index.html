@@ -570,7 +570,7 @@
      pall200, pall228, for, vann, dode, kommentar }
    ============================================================ */
 
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 const KEY = 'honseri_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -1193,26 +1193,26 @@ function deleteEntry(id) {
 /* ---------- Oversikt ---------- */
 /* ---------- Siste Nortura-avregning (oppdaterast manuelt ved ny avregning) ---------- */
 const AVREGNING = {
-  nr: '5108241579',
-  hentedato: '2026-08-05',
-  utbetalt: '2026-08-17',
-  antall: 43200,
-  vektKg: 2562.95,
-  bruttoKr: 76764.01,
-  eksMvaKr: 66751.33,
-  snittprisEgg: 1.55,     // kr/egg inkl. tillegg, eks. MVA (66 751,33 / 43 200)
-  snittvektG: 59.3,
-  mlSnittvektG: 59.6,
-  tilleggKr: 3411.74,
-  hittilBruttoKr: 1162076.93,
-  // Størrelsesmiks etter antall; småpostar (XL 49, SI 26, Blod 16, Knekk 27) er samla i Øvrig
+  nr: '5108251452',
+  hentedato: '2026-08-19',
+  utbetalt: '2026-08-31',
+  antall: 32400,
+  vektKg: 1960.50,
+  bruttoKr: 57697.56,
+  eksMvaKr: 50171.78,
+  snittprisEgg: 1.55,     // kr/egg inkl. tillegg, eks. MVA (50 171,78 / 32 400)
+  snittvektG: 60.5,
+  mlSnittvektG: 60.7,
+  tilleggKr: 2608.92,
+  hittilBruttoKr: 1219774.49,
+  // Størrelsesmiks etter antall; småpostar (XL 88, SI 25, Blod 19, Knekk 41) er samla i Øvrig
   miks: [
-    { k: 'M',      n: 33858, c: '#57A047' },
-    { k: 'L',      n: 6520,  c: '#C4862B' },
-    { k: 'S',      n: 1569,  c: '#8170CC' },
-    { k: 'Skitne', n: 495,   c: '#3D7DB3' },
-    { k: 'Klink',  n: 640,   c: '#B3506B' },
-    { k: 'Øvrig',  n: 118,   c: '#6E7887' }
+    { k: 'M',      n: 22354, c: '#57A047' },
+    { k: 'L',      n: 7819,  c: '#C4862B' },
+    { k: 'S',      n: 850,   c: '#8170CC' },
+    { k: 'Skitne', n: 556,   c: '#3D7DB3' },
+    { k: 'Klink',  n: 648,   c: '#B3506B' },
+    { k: 'Øvrig',  n: 173,   c: '#6E7887' }
   ]
 };
 
