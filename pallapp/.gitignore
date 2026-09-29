@@ -1,7 +1,5 @@
 node_modules/
-.wrangler/
-.dev.vars
-backup/
-*.sql.gz
-.env.prod
-wrangler.prod.toml
+dist/
+public/config.js
+public/vendor/
+.dev-data.json

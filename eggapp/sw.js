@@ -1,7 +1,7 @@
 /* Service worker for Hønseri-appen.
    Nettverk-først for sjølve appen (index.html) → du får alltid nyaste versjon
    når du er på nett, utan å reinstallere. Cache brukast som reserve når du er offline. */
-const CACHE = 'honseri-v17';
+const CACHE = 'honseri-v18';
 const ASSETS = [
   './',
   './index.html',
@@ -30,8 +30,8 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  // Gjødseljournalen og Eggly ligg i eigne undermapper – ikkje rør
-  if (url.pathname.includes('/gjodsel/') || url.pathname.includes('/eggly/')) return;
+  // Gjødseljournalen, Eggly og Pallsporing ligg i eigne undermapper – ikkje rør
+  if (url.pathname.includes('/gjodsel/') || url.pathname.includes('/eggly/') || url.pathname.includes('/pall/')) return;
   const isAppShell = req.mode === 'navigate'
     || url.pathname.endsWith('/')
     || url.pathname.endsWith('/index.html')

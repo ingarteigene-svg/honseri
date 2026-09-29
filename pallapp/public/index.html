@@ -6,12 +6,13 @@
 <title>Pallsporing</title>
 <meta name="description" content="Sporbarhet for eggpaller – Klokkargarden">
 <meta name="theme-color" content="#14532d">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pallsporing">
-<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
 <header class="top">
@@ -29,6 +30,8 @@
 
 <dialog id="dialog"></dialog>
 
-<script src="/app.js" type="module"></script>
+<script src="config.js"></script>
+<script src="vendor/msal-browser.min.js"></script>
+<script src="app.js" type="module"></script>
 </body>
 </html>

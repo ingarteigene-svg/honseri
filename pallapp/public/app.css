@@ -206,7 +206,7 @@ table.list a.pno { font-weight: 700; font-size: 1.1rem; }
 
 dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
 dl.facts dt { color: var(--muted); }
-dl.facts dd { margin: 0; font-weight: 600; }
+dl.facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
 
 .history { list-style: none; padding: 0; margin: 0; }
 .history li { border-left: 3px solid var(--border); padding: 4px 0 12px 12px; }
@@ -233,3 +233,14 @@ dialog ul { padding-left: 20px; }
 .confirm-list { list-style: none; padding: 0; margin: 12px 0; border: 1px solid var(--border); border-radius: var(--radius); }
 .confirm-list li { display: flex; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 1.1rem; }
 .confirm-list li:last-child { border-bottom: 0; }
+
+/* Pallstørrelse */
+.sizes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sizes .size { flex-direction: column; min-height: 88px; gap: 0; background: var(--surface); }
+.sizes .size b { font-size: 2rem; line-height: 1.1; }
+.sizes .size span { font-weight: 600; font-size: 0.95rem; color: var(--muted); }
+.sizes .size.on { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+.sizes .size.on span { color: var(--primary-text); }
+.history li.rejected { border-left-color: var(--err-border); opacity: 0.8; }
+div.field { margin-bottom: 16px; font-weight: 600; }
+div.field > span.lbl { display: block; margin-bottom: 6px; }

@@ -1,17 +1,16 @@
 {
   "name": "pallapp",
-  "version": "1.0.0",
-  "description": "Pallsporing for egg – Klokkargarden (Cloudflare Worker + D1)",
-  "scripts": {
-    "dev": "wrangler d1 migrations apply DB --local && wrangler dev",
-    "test": "node --test --test-concurrency=1 test/auth.test.mjs test/api.test.mjs",
-    "deploy": "node scripts/prod.mjs deploy",
-    "backup": "node scripts/prod.mjs backup"
-  },
-  "license": "UNLICENSED",
-  "devDependencies": {
-    "wrangler": "^4.143.0"
-  },
+  "version": "2.0.0",
   "private": true,
-  "type": "module"
+  "description": "Pallsporing for egg – Klokkargarden (GitHub Pages + Excel i OneDrive for Business)",
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "4.30.0"
+  }
 }
