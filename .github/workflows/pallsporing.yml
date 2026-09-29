@@ -1,0 +1,72 @@
+name: Pallsporing – test og publisering
+
+on:
+  push:
+    branches: [main]
+    paths: ['pallapp/**', '.github/workflows/pallsporing.yml']
+  pull_request:
+    paths: ['pallapp/**', '.github/workflows/pallsporing.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pallsporing-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pallapp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pallapp/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    # Publiserer bare fra main, og bare når Cloudflare-oppsettet er lagt inn
+    # (Settings → Secrets and variables → Actions). Uten oppsett hoppes steget over.
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pallapp
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+      ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+      ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+    steps:
+      - name: Sjekk oppsett
+        id: cfg
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$D1_DATABASE_ID" ]; then
+            echo "::notice::Cloudflare er ikke satt opp ennå – publisering hoppes over (se pallapp/README.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ready == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pallapp/package-lock.json
+      - run: npm ci
+        if: steps.cfg.outputs.ready == 'true'
+      - name: Migrer database og publiser
+        if: steps.cfg.outputs.ready == 'true'
+        run: npm run deploy
