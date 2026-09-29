@@ -25,6 +25,11 @@ if (existsSync(envFile)) {
   }
 }
 
+// Fjern mellomrom/linjeskift som lett følger med ved kopiering av verdier.
+for (const k of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'D1_DATABASE_ID', 'ACCESS_TEAM_DOMAIN', 'ACCESS_AUD']) {
+  if (process.env[k] != null) process.env[k] = process.env[k].trim();
+}
+
 function need(name) {
   const v = process.env[name];
   if (!v) {
@@ -43,7 +48,17 @@ if (!['deploy', 'backup'].includes(cmd)) {
 // Midlertidig konfigurasjon med ekte database-ID (skrives aldri til Git).
 const dbId = need('D1_DATABASE_ID');
 const prodConfig = join(root, 'wrangler.prod.toml');
-writeFileSync(prodConfig, readFileSync(join(root, 'wrangler.toml'), 'utf8').replace('SETTES_VED_DEPLOY', dbId));
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dbId)) {
+  console.error('D1_DATABASE_ID ser ikke riktig ut (forventet format 1a2b3c4d-5e6f-…). Kopier «Database ID» fra Cloudflare på nytt.');
+  process.exit(1);
+}
+const template = readFileSync(join(root, 'wrangler.toml'), 'utf8');
+const configured = template.replace(/^database_id = "SETTES_VED_DEPLOY"$/m, `database_id = "${dbId}"`);
+if (configured === template) {
+  console.error('Fant ikke linjen database_id = "SETTES_VED_DEPLOY" i wrangler.toml.');
+  process.exit(1);
+}
+writeFileSync(prodConfig, configured);
 
 const wrangler = (...args) =>
   execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['wrangler', ...args, '--config', 'wrangler.prod.toml'], {
