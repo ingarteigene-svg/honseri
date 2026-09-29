@@ -55,47 +55,57 @@ kan redigeres direkte forbi alle kontroller, og GitHub Pages kan ikke kjøre ser
 Pallnummer normaliseres før lagring: mellomrom fjernes, bokstaver blir store, og ledende nuller
 i rene tall fjernes («007» = «7»). Dermed kan samme kort ikke registreres to ganger med ulik skrivemåte.
 
-## Oppsett (én gang, ca. 30 min)
+## Oppsett (én gang, ca. 30 min, bare i nettleseren)
 
-Du trenger en PC med [Node.js 22](https://nodejs.org) og en gratis Cloudflare-konto.
+Du trenger bare nettleseren, en gratis Cloudflare-konto og tilgang til dette GitHub-repoet.
+GitHub publiserer appen og oppretter databasetabellene automatisk.
 
-1. **Last ned koden og installer**
-   ```bash
-   git clone https://github.com/ingarteigene-svg/honseri.git
-   cd honseri/pallapp
-   npm install
-   npx wrangler login          # åpner nettleseren – logg inn i Cloudflare
-   ```
-2. **Opprett databasen**
-   ```bash
-   npx wrangler d1 create pallsporing
-   ```
-   Noter `database_id` fra svaret. Den skal **ikke** inn i Git.
-3. **Lag `pallapp/.env.prod`** (kopi av `.env.prod.example`, ligger i `.gitignore`) og fyll inn
-   `CLOUDFLARE_ACCOUNT_ID` (Cloudflare-dashbord → konto → *Account ID*) og `D1_DATABASE_ID`.
-4. **Første publisering:** `npm run deploy`. Tabellene opprettes, og appen publiseres til
-   `https://pallsporing.<ditt-subdomene>.workers.dev`. Inntil punkt 5 er gjort, avviser appen alle forespørsler.
-5. **Slå på innlogging (Cloudflare Access)**
-   1. Dashbord → *Workers & Pages* → **pallsporing** → *Settings* → *Domains & Routes* →
-      ved *workers.dev*: **Enable Cloudflare Access**. Følg veiviseren for Zero Trust (velg Free) første gang.
-   2. **Manage Cloudflare Access** → rediger policyen: *Include → Emails* → legg inn e-postadressen til hver
-      godkjente bruker. Fjern andre regler, for eksempel «hele e-postdomenet».
-   3. Sett gjerne *Session duration* til 30 dager, så slipper pakkeriet å logge inn ofte.
-   4. Noter **Application Audience (AUD) Tag** (Zero Trust → Access → Applications → pallsporing) og
-      teamdomenet (Zero Trust → Settings → *Team domain*, f.eks. `klokkargarden.cloudflareaccess.com`).
-   5. Legg dem inn i `.env.prod` som `ACCESS_AUD` og `ACCESS_TEAM_DOMAIN`, og kjør `npm run deploy` igjen.
-6. **Automatisk publisering fra GitHub (anbefalt):** Opprett et API-token (Cloudflare → *My Profile* →
-   *API Tokens* → mal **Edit Cloudflare Workers**, og legg til *Account → D1 → Edit*). Legg deretter inn disse
-   under GitHub → repo → *Settings → Secrets and variables → Actions → New repository secret*:
-   `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `D1_DATABASE_ID`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`.
-   Deretter testes og publiseres appen automatisk ved hver endring i `pallapp/` på `main`
-   (`.github/workflows/pallsporing.yml`). Uten disse hemmelighetene kjører bare testene.
-7. **Test innlogging:** Åpne adressen i et privat nettleservindu. Du skal få Access-innlogging, og
-   en e-postadresse som ikke står i policyen, skal avvises.
-8. **På mobil:** Åpne adressen i Safari/Chrome → Del → **Legg til på Hjem-skjerm**.
+**Del A – Cloudflare: hent tre verdier**
+1. **Konto-ID:** Logg inn på dash.cloudflare.com. Adressen i nettleseren ser slik ut:
+   `dash.cloudflare.com/`**`<32 tegn>`**`/…`. De 32 tegnene er konto-ID-en. Den står også på
+   *Workers & Pages* til høyre under *Account ID*.
+2. **workers.dev-adresse:** Menyen til venstre → *Compute (Workers)* → *Workers & Pages*. Blir du bedt om
+   å velge et *subdomain*, skriv f.eks. `klokkargarden`. Appen får da adressen
+   `https://pallsporing.klokkargarden.workers.dev`.
+3. **Database:** Menyen → *Storage & Databases* → *D1 SQL Database* → **Create Database** → navn
+   `pallsporing` → **Create**. Kopier **Database ID** fra siden som vises.
+4. **API-token:** Øverst til høyre → profilikonet → *Profile* → *API Tokens* → **Create Token** →
+   mal **Edit Cloudflare Workers** → *Use template*.
+   * Under *Permissions*: **+ Add more** → *Account* · *D1* · *Edit*.
+   * *Account Resources*: *Include* · din konto. *Zone Resources*: *Include* · *All zones*.
+   * **Continue to summary** → **Create Token** → kopier tokenet. Det vises bare én gang.
 
-**Brukere:** Legg til og fjern brukere i Access-policyen (punkt 5.2). For å kaste ut en bruker
-umiddelbart: Zero Trust → *My Team → Users* → velg bruker → **Revoke session**.
+Finner du ikke et menyvalg, bruk søkefeltet (Ctrl+K) og søk etter «D1», «API Tokens» osv.
+
+**Del B – GitHub: lagre verdiene og publiser**
+1. github.com/ingarteigene-svg/honseri → *Settings* → *Secrets and variables* → *Actions* →
+   **New repository secret**, én om gangen:
+   `CLOUDFLARE_API_TOKEN` (tokenet), `CLOUDFLARE_ACCOUNT_ID` (konto-ID-en), `D1_DATABASE_ID` (database-ID-en).
+2. Merge pull requesten for Pallsporing, eller gå til *Actions* → *Pallsporing – test og publisering* →
+   **Run workflow**.
+3. Når kjøringen er grønn, er appen publisert. Åpner du adressen nå, får du en feilmelding om at
+   innlogging ikke er konfigurert. Det er riktig: appen stenger alle ute til del C er gjort.
+
+**Del C – Innlogging (Cloudflare Access)**
+1. *Workers & Pages* → **pallsporing** → *Settings* → *Domains & Routes* → ved *workers.dev*:
+   **Enable Cloudflare Access**. Første gang opprettes Zero Trust. Velg et teamnavn, f.eks. `klokkargarden`,
+   og planen **Free**. Cloudflare kan be om betalingskort; det belastes ikke på Free.
+2. **Manage Cloudflare Access** → rediger policyen: *Include* → *Emails* → legg inn e-postadressen til hver
+   godkjente bruker. Fjern andre regler, for eksempel «hele e-postdomenet». Sett gjerne *Session duration*
+   til 30 dager, så slipper pakkeriet å logge inn ofte.
+3. Noter **Application Audience (AUD) Tag** (Zero Trust → *Access* → *Applications* → pallsporing) og
+   **teamdomenet** (Zero Trust → *Settings*, f.eks. `klokkargarden.cloudflareaccess.com`).
+4. Legg dem inn som GitHub-secrets `ACCESS_AUD` og `ACCESS_TEAM_DOMAIN` (som i B1), og kjør workflowen igjen (B2).
+5. **Test:** Åpne adressen i et privat nettleservindu. Du skal få en innloggingsside med engangskode på e-post.
+   En e-postadresse som ikke står i policyen, skal avvises.
+6. **På mobil:** Åpne adressen i Safari/Chrome → Del → **Legg til på Hjem-skjerm**.
+
+**Brukere:** Legg til og fjern brukere i Access-policyen (C2). For å kaste ut en bruker umiddelbart:
+Zero Trust → *My Team → Users* → velg bruker → **Revoke session**.
+
+**Alternativ fra PC** (krever [Node.js 22](https://nodejs.org)): `npx wrangler login`, og lag deretter
+`pallapp/.env.prod` fra `.env.prod.example` og kjør `npm run deploy`. Samme PC-oppsett brukes til den
+ukentlige sikkerhetskopien (`npm run backup`, se under).
 
 ## Bruk
 
