@@ -30,24 +30,12 @@ jobs:
         working-directory: gjodselapp
         env:
           NEXT_PUBLIC_BASE_PATH: /honseri/gjodsel
-      - name: Test og bygg Pallsporing
-        working-directory: pallapp
-        env:
-          # Settes under Settings → Secrets and variables → Actions → Variables (ikke i koden)
-          PALL_CLIENT_ID: ${{ vars.PALL_CLIENT_ID }}
-          PALL_TENANT_ID: ${{ vars.PALL_TENANT_ID }}
-          PALL_FILE_URL: ${{ vars.PALL_FILE_URL }}
+      - name: Sett sammen nettstedet (egg på rot, gjødsel og eggly i undermapper)
         run: |
-          npm ci
-          npm test
-          npm run build
-      - name: Sett sammen nettstedet (egg på rot, gjødsel, eggly og pall i undermapper)
-        run: |
-          mkdir -p site/gjodsel site/eggly site/pall
+          mkdir -p site/gjodsel site/eggly
           cp -r eggapp/. site/
           cp -r gjodselapp/out/. site/gjodsel/
           cp -r eggly/. site/eggly/
-          cp -r pallapp/dist/. site/pall/
       - name: Verifiser nettstedet før publisering
         run: |
           set -e
@@ -55,9 +43,7 @@ jobs:
                    gjodsel/index.html gjodsel/sw.js gjodsel/manifest.json \
                    gjodsel/logg/index.html gjodsel/skifter/index.html \
                    gjodsel/innstillinger/index.html \
-                   eggly/index.html eggly/manifest.webmanifest eggly/icon-512.png \
-                   pall/index.html pall/app.js pall/core.js pall/excel.js pall/auth.js \
-                   pall/config.js pall/vendor/msal-browser.min.js; do
+                   eggly/index.html eggly/manifest.webmanifest eggly/icon-512.png; do
             test -f "site/$f" || { echo "MANGLER: site/$f"; exit 1; }
           done
           grep -q 'honseri-v' site/sw.js

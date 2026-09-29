@@ -1,0 +1,24 @@
+# Pallsporing – Klokkargarden (Cloudflare Worker + D1)
+#
+# Ingen hemmeligheter eller driftsdata her. Verdiene under merket SETTES_VED_DEPLOY
+# fylles inn av GitHub Actions fra repo-variabler (se README), eller med --var ved
+# manuell deploy fra PC.
+
+name = "pallsporing"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pallsporing"
+database_id = "SETTES_VED_DEPLOY"
+migrations_dir = "migrations"
+
+[observability]
+enabled = true
