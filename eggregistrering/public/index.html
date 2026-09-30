@@ -481,17 +481,6 @@
       </div>
     </div>
 
-    <div class="card" id="card-paller">
-      <div class="card-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>
-        <span data-i18n="t_paller">Pakking av paller</span>
-      </div>
-      <div class="field-grid">
-        <div class="field"><label for="pall200"><span data-i18n="l_pall200">200-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall200" min="0" inputmode="numeric" placeholder="0"></div>
-        <div class="field"><label for="pall228"><span data-i18n="l_pall228">228-paller</span> <span class="unit" data-i18n="u_stk">stk</span></label><input type="number" id="pall228" min="0" inputmode="numeric" placeholder="0"></div>
-      </div>
-    </div>
-
     <div class="card" id="card-drift">
       <div class="card-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
@@ -605,10 +594,11 @@
    i localStorage slik at appen verkar utan nett, og endringar blir lagde
    i ei kø og sende når nettet er tilbake.
    Registrering: { id (tekst), navn, dato, egg, store, vanlige, kartonger,
-     klink, pall200, pall228, for, vann, dode, timer, kommentar }
+     klink, for, vann, dode, timer, kommentar } — pall200/pall228 finst
+   berre på eldre, flytta registreringar (paller ligg no i Pallsporing)
    ============================================================ */
 
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.1';
 const KEY = 'honseri_cf_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -647,9 +637,8 @@ function formatDate(iso) {
 const I18N = {
   no: {
     subtitle:'Dagsregistrering', t_person:'Kven registrerer', t_egg:'Antall egg plukka',
-    t_brett:'Brett til gardsbutikk', t_paller:'Pakking av paller', t_drift:'Driftsdata',
+    t_brett:'Brett til gardsbutikk', t_drift:'Driftsdata',
     l_store:'Store brett', l_vanlige:'Vanlege brett', l_kartonger:'Kartongar', l_klink:'Klink brett',
-    l_pall200:'200-paller', l_pall228:'228-paller', u_stk:'stk',
     l_for:'For på siloen', l_vann:'Vannmålar', l_dode:'Døde høner',
     l_kommentar:'Kommentar', ph_kommentar:'Ev. merknadar…', btn_save:'Lagre registrering',
     btn_update:'Oppdater registrering', btn_cancel_edit:'Avbryt', edit_mode:'Redigerer registrering',
@@ -671,13 +660,12 @@ const I18N = {
     s_key:'Nøkkeltal', s_trend:'Egg-utvikling', s_trend_sub:'Egg per dag',
     s_trend_hint:'siste 14 dagar', s_mix:'Fordeling per person', s_mix_hint:'del av egga',
     c_ovrig:'Øvrig', l_timer:'Timar arbeidd', c_timer:'Timar',
-    toast_heiltal:'Egg, brett, paller og døde må vere heile tal', toast_timer:'Timar arbeidd kan vere maks 24', toast_future:'Dato kan ikkje vere fram i tid'
+    toast_heiltal:'Egg, brett og døde må vere heile tal', toast_timer:'Timar arbeidd kan vere maks 24', toast_future:'Dato kan ikkje vere fram i tid'
   },
   uk: {
     subtitle:'Щоденний облік', t_person:'Хто реєструє', t_egg:'Зібрано яєць',
-    t_brett:'Лотки для магазину', t_paller:'Пакування палет', t_drift:'Виробничі дані',
+    t_brett:'Лотки для магазину', t_drift:'Виробничі дані',
     l_store:'Великі лотки', l_vanlige:'Звичайні лотки', l_kartonger:'Картонки', l_klink:'Лотки клінк',
-    l_pall200:'200-палети', l_pall228:'228-палети', u_stk:'шт',
     l_for:'Корм у силосі', l_vann:'Лічильник води', l_dode:'Загиблі кури',
     l_kommentar:'Коментар', ph_kommentar:'Примітки…', btn_save:'Зберегти запис',
     btn_update:'Оновити запис', btn_cancel_edit:'Скасувати', edit_mode:'Редагування запису',
@@ -699,13 +687,12 @@ const I18N = {
     s_key:'Ключові показники', s_trend:'Динаміка яєць', s_trend_sub:'Яєць на день',
     s_trend_hint:'останні 14 днів', s_mix:'Розподіл за особами', s_mix_hint:'частка яєць',
     c_ovrig:'Інше', l_timer:'Відпрацьовані години', c_timer:'Години',
-    toast_heiltal:'Яйця, лотки, палети й загиблі мають бути цілими числами', toast_timer:'Відпрацьовані години: максимум 24', toast_future:'Дата не може бути в майбутньому'
+    toast_heiltal:'Яйця, лотки й загиблі мають бути цілими числами', toast_timer:'Відпрацьовані години: максимум 24', toast_future:'Дата не може бути в майбутньому'
   },
   lv: {
     subtitle:'Ikdienas reģistrācija', t_person:'Kas reģistrē', t_egg:'Savāktās olas',
-    t_brett:'Paplātes veikalam', t_paller:'Palešu iepakošana', t_drift:'Ražošanas dati',
+    t_brett:'Paplātes veikalam', t_drift:'Ražošanas dati',
     l_store:'Lielās paplātes', l_vanlige:'Parastās paplātes', l_kartonger:'Kartona kastes', l_klink:'Klink paplātes',
-    l_pall200:'200 paletes', l_pall228:'228 paletes', u_stk:'gab.',
     l_for:'Barība silosā', l_vann:'Ūdens skaitītājs', l_dode:'Beigtās vistas',
     l_kommentar:'Komentārs', ph_kommentar:'Piezīmes…', btn_save:'Saglabāt ierakstu',
     btn_update:'Atjaunināt ierakstu', btn_cancel_edit:'Atcelt', edit_mode:'Rediģē ierakstu',
@@ -727,7 +714,7 @@ const I18N = {
     s_key:'Galvenie rādītāji', s_trend:'Olu dinamika', s_trend_sub:'Olas dienā',
     s_trend_hint:'pēdējās 14 dienas', s_mix:'Sadalījums pa personām', s_mix_hint:'olu daļa',
     c_ovrig:'Cits', l_timer:'Nostrādātās stundas', c_timer:'Stundas',
-    toast_heiltal:'Olām, paplātēm, paletēm un beigtajām jābūt veseliem skaitļiem', toast_timer:'Nostrādātās stundas: ne vairāk kā 24', toast_future:'Datums nevar būt nākotnē'
+    toast_heiltal:'Olām, paplātēm un beigtajām jābūt veseliem skaitļiem', toast_timer:'Nostrādātās stundas: ne vairāk kā 24', toast_future:'Datums nevar būt nākotnē'
   }
 };
 let LANG = 'no';
@@ -1222,8 +1209,11 @@ function parseDate(v) {
   return null;
 }
 
+/* Import les også palletal, så eldre registreringar blir flytta komplette */
+const importFields = () => [...NUM_FIELDS, 'pall200', 'pall228'];
+
 async function fingerprint(e) {
-  const s = [e.dato, e.navn, ...NUM_FIELDS.map(k => e[k]), e.kommentar].join('|');
+  const s = [e.dato, e.navn, ...importFields().map(k => e[k]), e.kommentar].join('|');
   const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)));
   return 'imp-' + [...h.slice(0, 12)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
@@ -1239,7 +1229,7 @@ async function rowsToEntries(rows) {
     const dato = parseDate(o.dato);
     if (!dato) continue;
     const e = { dato, navn: String(o.navn ?? '').trim(), kommentar: String(o.kommentar ?? '').trim() };
-    NUM_FIELDS.forEach(k => { e[k] = toNum(o[k]); });
+    importFields().forEach(k => { e[k] = toNum(o[k]); });
     const idStr = String(o.id ?? '').trim();
     e.id = /^[A-Za-z0-9_-]{1,64}$/.test(idStr) ? idStr : await fingerprint(e);
     out.push(e);
@@ -1258,10 +1248,9 @@ function bump(id, delta) {
   el.value = v;
 }
 
-/* Vasyl pakkar paller → løft paller-seksjonen øvst. Egg-plukkarane får paller til slutt. */
+/* Rekkjefølgja på korta i skjemaet. Pakking av paller blir registrert i Pallsporing. */
 const FORM_ORDER = {
-  'Vasyl':   ['card-person','card-paller','card-egg','card-brett','card-drift'],
-  'default': ['card-person','card-egg','card-brett','card-drift','card-paller']
+  'default': ['card-person','card-egg','card-brett','card-drift']
 };
 function reorderForm(navn) {
   const view = document.getElementById('view-form');
@@ -1283,8 +1272,8 @@ function showTab(tab) {
 }
 
 /* ---------- Registrering (ny + redigering) ---------- */
-const NUM_FIELDS = ['egg','store','vanlige','kartonger','klink','pall200','pall228','for','vann','dode','timer'];
-const INT_FIELDS = ['egg','store','vanlige','kartonger','klink','pall200','pall228','dode'];
+const NUM_FIELDS = ['egg','store','vanlige','kartonger','klink','for','vann','dode','timer'];
+const INT_FIELDS = ['egg','store','vanlige','kartonger','klink','dode'];
 let editingId = null;
 
 function updateSubmitUI() {
@@ -1357,7 +1346,8 @@ function submitForm() {
     navn, dato: get('dato') || today(),
     egg: num('egg'), store: num('store'), vanlige: num('vanlige'),
     kartonger: num('kartonger'), klink: num('klink'),
-    pall200: num('pall200'), pall228: num('pall228'),
+    // Paller blir registrerte i Pallsporing; eldre tal blir behaldne ved redigering
+    pall200: prev?.pall200 || 0, pall228: prev?.pall228 || 0,
     for: num('for'), vann: num('vann'), dode: num('dode'),
     timer: num('timer'),
     kommentar: get('kommentar').trim()
@@ -1677,11 +1667,23 @@ function attachTrendPointer(series) {
 }
 
 /* ---------- Excel-eksport ---------- */
-const EXPORT_HEADER = ['Dato','Namn','Egg','Store brett','Vanlege brett','Kartongar','Klink','200-paller','228-paller','For på silo','Vannmålar','Døde høner','Timar arbeidd','Kommentar'];
-function entryRow(e){ return [formatDate(e.dato),e.navn||'',e.egg||0,e.store||0,e.vanlige||0,e.kartonger||0,e.klink||0,e.pall200||0,e.pall228||0,e.for||0,e.vann||0,e.dode||0,e.timer||0,e.kommentar||'']; }
+/* Kolonnar i Excel. Palle-kolonnane kjem berre med når det finst eldre registreringar med paller. */
+const EXPORT_COLS = [
+  ['Dato', e => formatDate(e.dato)], ['Namn', e => e.navn || ''], ['Egg', e => e.egg || 0],
+  ['Store brett', e => e.store || 0], ['Vanlege brett', e => e.vanlige || 0], ['Kartongar', e => e.kartonger || 0],
+  ['Klink', e => e.klink || 0], ['200-paller', e => e.pall200 || 0, 'pall'], ['228-paller', e => e.pall228 || 0, 'pall'],
+  ['For på silo', e => e.for || 0], ['Vannmålar', e => e.vann || 0], ['Døde høner', e => e.dode || 0],
+  ['Timar arbeidd', e => e.timer || 0], ['Kommentar', e => e.kommentar || '']
+];
+function exportCols(entries) {
+  const hasPall = entries.some(e => e.pall200 || e.pall228);
+  return EXPORT_COLS.filter(c => c[2] !== 'pall' || hasPall);
+}
 function sortedEntries(){ return [...loadEntries()].sort((a,b) => cmpDesc(b,a)); }
 function buildXlsxBlob(){
-  const rows = [EXPORT_HEADER, ...sortedEntries().map(entryRow)];
+  const es = sortedEntries();
+  const cols = exportCols(es);
+  const rows = [cols.map(col => col[0]), ...es.map(e => cols.map(col => col[1](e)))];
   return new Blob([makeXlsx(rows,'Hønseri')], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
 function exportName(){ return `honseri_logg_${today()}.xlsx`; }
