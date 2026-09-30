@@ -90,7 +90,7 @@ body{display:flex;justify-content:center}
     <div class="panel"><div class="mixbar" id="e_mixbar"></div><div class="legend" id="e_legend"></div></div>
     <div class="sec"><span class="dot"></span><span class="ic">📈</span> PRISUTVIKLING <span class="rule"></span></div>
     <div class="panel"><div class="ph"><span class="ic c-cyan">🏷️</span><span class="t">Snittpris per egg</span><span class="pill" id="e_ppill">–</span></div>
-      <div class="psub">Grønn: per levert egg · Gull stiplet: per produsert egg (inkl. lokalsalg)</div>
+      <div class="psub">Per levert egg, inkl. tilskudd, tillegg og MVA</div>
       <div class="chartbox"><svg id="chartEP" viewBox="0 0 420 160" preserveAspectRatio="none" style="width:100%;height:160px"></svg></div>
       <div class="xlabels" id="e_xp"></div></div>
     <div class="sec"><span class="dot" style="background:var(--green);box-shadow:0 0 10px var(--green)"></span><span class="ic">Σ</span> TOTALT LEVERT <span class="rule"></span></div>
@@ -156,13 +156,6 @@ function area(id,data,opts){const svg=document.getElementById(id);if(!svg)return
  g+=`<path d="${ar}" fill="url(#g${id})"/><path d="${ln}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#f${id})"/>`;
  pts.forEach((p,i)=>{const last=i===pts.length-1;g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?5:3.2}" fill="${last?col:'#0b1220'}" stroke="${col}" stroke-width="2"/>`;if(last)g+=`<text x="${p[0]}" y="${p[1]-12}" text-anchor="end" fill="${col}" font-size="15" font-weight="800">${opts.last}</text>`;});
  g+=`<text x="${pts[0][0]+2}" y="${pts[0][1]-10}" fill="#5d6678" font-size="12" font-weight="700">${opts.first}</text>`;
- if(opts.extra){const e=opts.extra;const ev=e.data.filter(v=>v!=null);
-  const emn=Math.min(mn,Math.min(...ev)*0.95);const emx=Math.max(mx,Math.max(...ev)*1.05);
-  const ey=v=>pt+(H-pt-pb)*(1-(v-emn)/(emx-emn||1));
-  const epts=e.data.map((v,i)=>v==null?null:[x(i),ey(v)]).filter(Boolean);
-  g+=`<path d="${smooth(epts)}" fill="none" stroke="${e.color}" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round"/>`;
-  epts.forEach((p,i)=>{const last=i===epts.length-1;g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${last?4.5:2.8}" fill="${last?e.color:'#0b1220'}" stroke="${e.color}" stroke-width="2"/>`;
-   if(last)g+=`<text x="${p[0]}" y="${p[1]+20}" text-anchor="end" fill="${e.color}" font-size="13" font-weight="800">${e.last}</text>`;});}
  svg.innerHTML=g;}
 function bars(id,data,opts){const svg=document.getElementById(id);if(!svg)return;const H=+svg.getAttribute("viewBox").split(" ")[3],W=420,pl=12,pr=12,pt=24,pb=14;
  const mx=Math.max(...data)*1.12;const n=data.length;const bw=(W-pl-pr)/n*0.6;const gap=(W-pl-pr)/n;
@@ -179,10 +172,7 @@ function renderEgg(){const e=D.egg;if(!e)return;
  S("e_tegg",nf(e.totalt.egg));S("e_tbrutto",nf(e.totalt.brutto));S("e_tbrett",nf(e.totalt.brett));S("e_tpall",nf(e.totalt.pall,1));
  const xs=e.dev.map(d=>`<span>${d.dato}</span>`).join("");S("e_xw",xs);S("e_xp",xs);
  area("chartEW",e.dev.map(d=>d.vekt),{color:"#33C27E",last:nf(e.dev.at(-1).vekt,1)+" g",first:nf(e.dev[0].vekt,1)+" g"});
- const _pp=e.dev.map(d=>d.prisProd??null);
- const _hasPP=_pp.some((v,i)=>v!=null&&Math.abs(v-e.dev[i].pris)>1e-6);
- area("chartEP",e.dev.map(d=>d.pris),{color:"#33C27E",last:nf(e.dev.at(-1).pris,2)+" kr",first:nf(e.dev[0].pris,2)+" kr",
-  extra:(_hasPP?{data:_pp,color:"#B38E00",last:nf(_pp.filter(v=>v!=null).at(-1),2)+" kr"}:null)});
+ area("chartEP",e.dev.map(d=>d.pris),{color:"#33C27E",last:nf(e.dev.at(-1).pris,2)+" kr",first:nf(e.dev[0].pris,2)+" kr"});
  S("e_mixbar",e.miks.map(m=>`<div style="width:${m[1]}%;background:${m[2]}"></div>`).join(""));
  S("e_legend",e.miks.map(m=>`<span class="li"><span class="sw" style="background:${m[2]}"></span>${m[0]} <b>${nf(m[1],1)}%</b></span>`).join(""));}
 function renderFor(){const f=D.for;if(!f){document.getElementById("navFor").style.display="none";return;}
