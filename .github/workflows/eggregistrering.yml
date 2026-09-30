@@ -1,0 +1,76 @@
+name: Hønseri (Cloudflare) – test og publisering
+
+on:
+  push:
+    branches: [main]
+    paths: ['eggregistrering/**', '.github/workflows/eggregistrering.yml']
+  pull_request:
+    paths: ['eggregistrering/**', '.github/workflows/eggregistrering.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: eggregistrering-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: eggregistrering
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: eggregistrering/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    # Publiserer berre frå main, og berre når Cloudflare-oppsettet finst
+    # (Settings → Secrets and variables → Actions). Same konto og API-token som
+    # Pallsporing, men eigen Worker («honseri»), eigen database og eiga innlogging.
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: eggregistrering
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      HONSERI_D1_DATABASE_ID: ${{ secrets.HONSERI_D1_DATABASE_ID }}
+      ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+      HONSERI_ACCESS_AUD: ${{ secrets.HONSERI_ACCESS_AUD }}
+    steps:
+      - name: Sjekk oppsett
+        id: cfg
+        working-directory: ${{ github.workspace }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Cloudflare er ikkje sett opp – publisering blir hoppa over (sjå eggregistrering/README.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -z "$HONSERI_ACCESS_AUD" ]; then
+            echo "::notice::HONSERI_ACCESS_AUD manglar – appen blir publisert, men stengd til innlogging er sett opp (README, del B)."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ready == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: eggregistrering/package-lock.json
+      - run: npm ci
+        if: steps.cfg.outputs.ready == 'true'
+      - name: Finn/opprett database, migrer og publiser
+        if: steps.cfg.outputs.ready == 'true'
+        run: npm run deploy

@@ -1,0 +1,3 @@
+# Kun for lokal utvikling (npm run dev). Kopier til .dev.vars – den fila er i .gitignore.
+# DEV_USER omgår innlogging, og verkar berre på localhost.
+DEV_USER=utviklar@example.no

@@ -1,0 +1,18 @@
+{
+  "name": "eggregistrering",
+  "version": "3.0.0",
+  "description": "Hønseri – dagleg eggregistrering for Klokkargarden (Cloudflare Worker + D1)",
+  "scripts": {
+    "dev": "wrangler d1 migrations apply DB --local && wrangler dev --test-scheduled",
+    "test": "node --test --test-concurrency=1 test/push.test.mjs test/auth.test.mjs test/api.test.mjs",
+    "deploy": "node scripts/prod.mjs deploy",
+    "backup": "node scripts/prod.mjs backup"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "http_ece": "^1.2.0",
+    "wrangler": "^4.143.0"
+  },
+  "private": true,
+  "type": "module"
+}
