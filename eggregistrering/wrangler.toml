@@ -1,0 +1,29 @@
+# Hønseri – dagleg eggregistrering (Cloudflare Worker + D1)
+#
+# Ingen hemmelegheiter eller driftsdata her. database_id = "SETTES_VED_DEPLOY" blir
+# fylt inn av scripts/prod.mjs ved publisering (frå GitHub Actions eller PC).
+
+name = "honseri"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "honseri"
+database_id = "SETTES_VED_DEPLOY"
+migrations_dir = "migrations"
+
+# Påminning om manglande eggregistrering kl. 17 norsk tid.
+# Cron går i UTC: 15:00 UTC = 17:00 sommartid, 16:00 UTC = 17:00 vintertid.
+# Workeren sjekkar sjølv at klokka er 17 i Noreg, så berre éin av dei sender.
+[triggers]
+crons = ["0 15,16 * * *"]
+
+[observability]
+enabled = true

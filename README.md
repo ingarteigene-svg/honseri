@@ -1,6 +1,6 @@
 # Klokkargarden – gårdsapper
 
-Mobilapper for Klokkargarden, Hareid. De tre første er publisert med GitHub Pages; Pallsporing kjører på Cloudflare fordi den trenger felles database og innlogging:
+Mobilapper for Klokkargarden, Hareid. De tre første er publisert med GitHub Pages; Pallsporing og Hønseri (Cloudflare) kjører på Cloudflare fordi de trenger felles database og innlogging:
 
 | App | Mappe | Adresse |
 |---|---|---|
@@ -8,6 +8,7 @@ Mobilapper for Klokkargarden, Hareid. De tre første er publisert med GitHub Pag
 | 🚜 **Gjødsel** – journal for hønsegjødselleveringer (§ 27) med OneDrive/Excel-synk | `gjodselapp/` | `https://ingarteigene-svg.github.io/honseri/gjodsel/` |
 | 📈 **Eggly** – Nortura-avregninger: pris, eggvekt, størrelsesmiks og fôr | `eggly/` | `https://ingarteigene-svg.github.io/honseri/eggly/` |
 | 📦 **Pallsporing** – sporbarhet for eggpaller: ny pall, levering, søk og tilbakekalling | `pallapp/` | Cloudflare Workers (egen adresse, krever innlogging) – se `pallapp/README.md` |
+| 🥚 **Hønseri (Cloudflare)** – eggregistreringen med felles database, innlogging og varsel kl. 17. Erstatter `eggapp/` når dataene er flyttet | `eggregistrering/` | `https://honseri.<subdomene>.workers.dev` (krever innlogging) – se `eggregistrering/README.md` |
 
 Begge bruker samme EGGLY-designspråk (mørk navy, emoji-fliser) og fungerer offline.
 Publisering skjer automatisk via `.github/workflows/deploy.yml` ved push til `main`.
