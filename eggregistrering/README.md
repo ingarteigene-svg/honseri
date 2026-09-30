@@ -5,9 +5,12 @@ person** og **ekte push-varsel kl. 17** når egg ikke er registrert. Løsningen 
 samme måte som Pallsporing, men er **helt adskilt** fra den: egen Worker, egen database og
 egen innloggingsliste. Den deler bare Cloudflare-kontoen og API-tokenet.
 
-Alt dere er vant til er med: språk per person (norsk, latvisk, ukrainsk), paller øverst for
-Vasyl, egg-teller i steg på 30, redigering, sletting med angre, oversikt, Excel-eksport og
-timer arbeidet. Appen virker også uten nett.
+Alt dere er vant til er med: språk per person (norsk, latvisk, ukrainsk), egg-teller i steg
+på 30, redigering, sletting med angre, oversikt, Excel-eksport og timer arbeidet. Appen virker
+også uten nett.
+
+**Pakking av paller registreres ikke her.** Det gjøres i Pallsporing. Eldre palletall som flyttes
+over fra den gamle appen, beholdes og vises i loggen og i Excel-eksporten.
 
 ## Løsning og kostnader
 
@@ -88,7 +91,7 @@ Når alt er flyttet og alle bruker den nye appen, kan den gamle Hønseri-appen l
   Databasen blokkerer sletting.
 * **Revisjonslogg:** Hver ny registrering og hver endring skrives automatisk til `audit_log`
   med hvem, når og gamle og nye verdier. Loggen kan ikke endres.
-* **Regler i databasen:** Tall kan ikke være negative, egg, brett, paller og døde må være hele tall,
+* **Regler i databasen:** Tall kan ikke være negative, egg, brett og døde må være hele tall,
   timer maks 24, og en registrering kan ikke være tom. Dato kan ikke være frem i tid.
 * **Innlogging:** Workeren kontrollerer Access-tokenet kryptografisk. Uten oppsett avvises alt.
 * **Varsel:** Innholdet krypteres til den enkelte telefonen, så push-tjenesten ikke kan lese det.

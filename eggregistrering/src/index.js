@@ -6,7 +6,7 @@ import { authenticate } from './auth.js';
 import { getVapid, sendPush } from './push.js';
 
 const REMINDER_HOUR = 17; // norsk tid
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.1';
 
 // ---------------------------------------------------------------------------
 // Hjelparar

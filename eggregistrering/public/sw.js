@@ -6,7 +6,7 @@
    - Berre vellukka svar frå eiga adresse blir lagra. Ei omdirigering til
      innloggingssida skal aldri lagrast som om ho var appen.
    - Tek imot push-varsel og viser dei. */
-const CACHE = 'honseri-cf-v1';
+const CACHE = 'honseri-cf-v2';
 const ASSETS = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
