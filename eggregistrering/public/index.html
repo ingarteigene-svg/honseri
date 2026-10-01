@@ -598,7 +598,7 @@
    berre på eldre, flytta registreringar (paller ligg no i Pallsporing)
    ============================================================ */
 
-const APP_VERSION = '3.1';
+const APP_VERSION = '3.2';
 const KEY = 'honseri_cf_entries';
 
 /* ---------- Lagring (robust) ---------- */
@@ -829,6 +829,7 @@ function updateNotifBtn() {
 
 /* ---------- API ---------- */
 let loginNeeded = false;
+let loginReason = '';
 let me = null;
 
 async function api(method, path, body) {
@@ -844,7 +845,10 @@ async function api(method, path, body) {
   }
   // Utgått innlogging: Cloudflare Access svarar med ei omdirigering til innloggingssida
   if (res.type === 'opaqueredirect' || res.status === 401 || res.status === 0) {
+    loginReason = '';
+    if (res.status === 401) { try { loginReason = (await res.json()).reason || ''; } catch (e) {} }
     setLoginNeeded(true);
+    updateStatusBar();
     throw Object.assign(new Error('Innlogginga har gått ut'), { login: true });
   }
   let data = null;
@@ -935,7 +939,7 @@ function updateStatusBar() {
   const ventar = q === 1 ? '1 endring ventar' : `${q} endringar ventar`;
   if (loginNeeded) {
     el.className = 'status-bar login';
-    el.innerHTML = `<span>🔒 Innlogginga har gått ut.${q ? ` ${ventar}, og blir send etter innlogging.` : ''}</span><button type="button" onclick="location.reload()">Logg inn</button>`;
+    el.innerHTML = `<span>🔒 Innlogginga har gått ut.${q ? ` ${ventar}, og blir send etter innlogging.` : ''}${loginReason ? `<br><small style="opacity:.8">Grunn: ${esc(loginReason)}</small>` : ''}</span><button type="button" onclick="location.reload()">Logg inn</button>`;
     el.style.display = 'flex';
   } else if (q) {
     el.className = 'status-bar';
