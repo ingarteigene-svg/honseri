@@ -63,3 +63,14 @@ test('mangler Access-oppsett: alt avvises (fail closed)', async () => {
   const token = await sign(good);
   await assert.rejects(() => authenticate(req(token), {}), /ikke konfigurert/);
 });
+
+test('avvisning gir forståeleg grunn (feil aud viser begge taggane forkorta)', async () => {
+  const { authenticateWithReason } = await import('../src/auth.js');
+  const r = await authenticateWithReason(req(await sign({ ...good, aud: ['annenapp-123456'] })), env);
+  assert.equal(r.user, null);
+  assert.match(r.reason, /aud/);
+  assert.match(r.reason, /annenap/);
+  assert.match(r.reason, /aud-tag-/);
+  const none = await authenticateWithReason(req(null), env);
+  assert.match(none.reason, /Ingen innloggingsbillett/);
+});

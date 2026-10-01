@@ -75,11 +75,16 @@ function isLocal(request) {
 }
 
 /** Returnerer e-postadressen til innlogget bruker, eller null. */
-export async function authenticate(request, env) {
+/**
+ * Som authenticate, men returnerer også grunnen når innlogginga blir avvist.
+ * Grunnen inneheld ingen hemmelegheiter, berre kva som ikkje stemde, slik at
+ * feil oppsett (t.d. feil AUD-tag eller teamdomene) er lett å finne.
+ */
+export async function authenticateWithReason(request, env) {
   // Lokal utvikling/test: DEV_USER settes bare i .dev.vars (ikke i Git, ikke i produksjon)
   // og virker kun på localhost.
   if (env.DEV_USER && isLocal(request)) {
-    return (request.headers.get('X-Dev-User') || env.DEV_USER).toLowerCase();
+    return { user: (request.headers.get('X-Dev-User') || env.DEV_USER).toLowerCase() };
   }
 
   const teamDomain = env.ACCESS_TEAM_DOMAIN;
@@ -96,10 +101,27 @@ export async function authenticate(request, env) {
     const m = cookie.match(/(?:^|;\s*)CF_Authorization=([^;]+)/);
     if (m) token = m[1];
   }
-  if (!token) return null;
+  if (!token) return { user: null, reason: 'Ingen innloggingsbillett fra Cloudflare Access i forespørselen' };
+  const team = teamDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
   try {
-    return await verifyJwt(token, teamDomain.replace(/^https?:\/\//, '').replace(/\/$/, ''), aud);
-  } catch {
-    return null;
+    return { user: await verifyJwt(token, team, aud) };
+  } catch (e) {
+    let detail = '';
+    try {
+      const p = b64urlJson(token.split('.')[1]);
+      const short = (s) => String(s || '').slice(0, 8);
+      if (/aud/.test(e.message)) {
+        const got = (Array.isArray(p.aud) ? p.aud : [p.aud]).map(short).join(', ');
+        detail = ` (billetten gjelder ${got}…, appen venter ${short(aud)}…)`;
+      } else if (/utsteder/.test(e.message)) {
+        detail = ` (billetten er fra ${p.iss}, appen venter https://${team})`;
+      }
+    } catch { /* ugyldig token */ }
+    return { user: null, reason: e.message + detail };
   }
+}
+
+/** Returnerer e-postadressen til innlogget bruker, eller null. */
+export async function authenticate(request, env) {
+  return (await authenticateWithReason(request, env)).user;
 }

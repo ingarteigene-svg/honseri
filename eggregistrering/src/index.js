@@ -2,11 +2,11 @@
 // Statiske filer (public/) blir serverte direkte av Cloudflare; alt under /api/ går hit.
 // Heilt åtskild frå Pallsporing: eigen Worker, eigen database og eiga innlogging.
 
-import { authenticate } from './auth.js';
+import { authenticateWithReason } from './auth.js';
 import { getVapid, sendPush } from './push.js';
 
 const REMINDER_HOUR = 17; // norsk tid
-const APP_VERSION = '3.1';
+const APP_VERSION = '3.2';
 
 // ---------------------------------------------------------------------------
 // Hjelparar
@@ -382,8 +382,11 @@ export default {
       return env.ASSETS.fetch(new Request(new URL('/', url), request));
     }
     try {
-      const user = await authenticate(request, env);
-      if (!user) return json({ error: 'Ikkje innlogga. Last sida på nytt for å logge inn.', login: true }, 401);
+      const { user, reason } = await authenticateWithReason(request, env);
+      if (!user) {
+        console.warn('Innlogging avvist:', reason);
+        return json({ error: 'Ikkje innlogga. Last sida på nytt for å logge inn.', login: true, reason }, 401);
+      }
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         // Enkel CSRF-vern: skriveoperasjonar må kome som JSON frå same opphav.
         const origin = request.headers.get('Origin');
