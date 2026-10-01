@@ -211,6 +211,15 @@ test('vern: skriving frå anna opphav og utan JSON blir avvist', async () => {
   assert.equal(res.status, 415);
 });
 
+test('statiske filer blir serverte gjennom Workeren', async () => {
+  const sw = await fetch(`${BASE}/sw.js`);
+  assert.equal(sw.status, 200);
+  assert.match(await sw.text(), /honseri-cf-v/);
+  const icon = await fetch(`${BASE}/icons/icon-192.png`);
+  assert.equal(icon.status, 200);
+  assert.match(icon.headers.get('content-type') || '', /image\/png/);
+});
+
 test('ukjende stiar viser appen', async () => {
   const res = await fetch(`${BASE}/noko/tull`, { headers: { 'X-Dev-User': 'x@y.no' } });
   assert.equal(res.status, 200);

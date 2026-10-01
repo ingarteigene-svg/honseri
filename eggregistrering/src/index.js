@@ -376,7 +376,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) {
-      // Ukjende stiar: vis appen (statiske filer blir serverte før Workeren blir kalla).
+      // Statiske filer (sida, sw.js, ikon). Ukjende stiar viser appen.
+      const asset = await env.ASSETS.fetch(request);
+      if (asset.status !== 404) return asset;
       return env.ASSETS.fetch(new Request(new URL('/', url), request));
     }
     try {
