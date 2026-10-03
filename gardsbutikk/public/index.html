@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Selvbetjent gårdsbutikk – velg varer og betal med Vipps eller kontant.">
+<title>Gårdsbutikk</title>
+<meta name="theme-color" content="#0C111C">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #0C111C;
+    --surface: #172136;
+    --surface-2: #1E2A44;
+    --surface-3: #273553;
+    --border: #243048;
+    --border-strong: #33436B;
+    --text: #F3F5F7;
+    --text-muted: #C4CBD1;
+    --text-dim: #8E969D;
+    --accent: #7CC36A;
+    --accent-soft: rgba(124,195,106,0.13);
+    --amber: #E3A445;
+    --amber-soft: rgba(227,164,69,0.13);
+    --red: #E5675A;
+    --red-soft: rgba(229,103,90,0.13);
+    --vipps: #FF5B24;
+    --vipps-press: #E94B16;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { color-scheme: dark; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    background-image: linear-gradient(180deg, #17223A 0%, var(--bg) 380px);
+    background-repeat: no-repeat;
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: var(--font); cursor: pointer; touch-action: manipulation; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  .app { max-width: 640px; margin: 0 auto; padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(12,17,28,0.85);
+    backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top) + 14px) 16px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .logo {
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    background: linear-gradient(160deg, #223050, #0C111C);
+    display: grid; place-items: center; font-size: 20px;
+    border: 1px solid var(--border-strong);
+  }
+  .brand h1 { font-size: 1.08rem; font-weight: 650; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .sub { font-size: 0.72rem; color: var(--text-dim); font-weight: 500; margin-top: 1px; }
+  .lang {
+    background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted);
+    border-radius: 8px; padding: 7px 11px; font-size: 0.78rem; font-weight: 650; flex-shrink: 0;
+  }
+
+  main { padding: 16px; }
+  .banner {
+    background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.4); color: #F0C079;
+    border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.88rem; line-height: 1.45; margin-bottom: 14px;
+  }
+  .banner.test { background: var(--red-soft); border-color: rgba(229,103,90,0.45); color: #F2A096; }
+  .lead { font-size: 0.95rem; color: var(--text-muted); margin: 2px 2px 14px; line-height: 1.45; }
+
+  .grid { display: grid; gap: 12px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center;
+    transition: border-color .15s, background .15s;
+  }
+  .tile.in-cart { border-color: rgba(124,195,106,0.55); background: linear-gradient(0deg, var(--accent-soft), var(--accent-soft)), var(--surface); }
+  .tile .emoji {
+    width: 54px; height: 54px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border-strong);
+    display: grid; place-items: center; font-size: 28px; position: relative;
+  }
+  .tile .info { min-width: 0; }
+  .tile .name { font-weight: 650; font-size: 1rem; }
+  .tile .desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; line-height: 1.35; }
+  .tile .meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .tile .price { font-weight: 700; font-size: 1.02rem; font-variant-numeric: tabular-nums; }
+  .chip { font-size: 0.68rem; font-weight: 700; border-radius: 999px; padding: 3px 8px; letter-spacing: 0.02em; }
+  .chip.ja { background: var(--accent-soft); color: var(--accent); }
+  .chip.få { background: var(--amber-soft); color: var(--amber); }
+  .chip.tomt { background: var(--red-soft); color: var(--red); }
+
+  .stepper { display: flex; align-items: center; gap: 4px; }
+  .stepper button {
+    width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--border-strong);
+    background: var(--surface-2); color: var(--text); font-size: 1.3rem; font-weight: 600; line-height: 1;
+  }
+  .stepper button.plus { background: var(--accent); border-color: var(--accent); color: #0C111C; }
+  .stepper button:disabled { opacity: 0.35; cursor: default; }
+  .stepper .n { min-width: 28px; text-align: center; font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
+  .paybar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: rgba(18,26,41,0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--border-strong);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .paybar .inner { max-width: 640px; margin: 0 auto; }
+  .paybar .total { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .paybar .total span { color: var(--text-muted); font-size: 0.85rem; }
+  .paybar .total b { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+  .paybar .buttons { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .btn {
+    border: none; border-radius: 12px; padding: 15px 16px; font-size: 1rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px;
+  }
+  .btn:disabled { opacity: 0.4; cursor: default; }
+  .btn.vipps { background: var(--vipps); color: #fff; }
+  .btn.vipps:not(:disabled):active { background: var(--vipps-press); }
+  .btn.cash { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn.primary { background: var(--accent); color: #0C111C; }
+  .btn.ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); }
+  .btn.wide { width: 100%; }
+
+  footer { text-align: center; font-size: 0.75rem; color: var(--text-dim); line-height: 1.6; padding: 22px 16px 8px; }
+
+  /* Kvittering */
+  .status { text-align: center; padding: 22px 8px 18px; }
+  .status .big { font-size: 52px; line-height: 1; margin-bottom: 12px; }
+  .status h2 { font-size: 1.35rem; margin-bottom: 6px; }
+  .status p { color: var(--text-muted); font-size: 0.92rem; line-height: 1.45; }
+  .spinner { width: 44px; height: 44px; margin: 0 auto 14px; border-radius: 50%; border: 4px solid var(--surface-3); border-top-color: var(--vipps); animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .receipt { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 6px 0 16px; }
+  .receipt .head { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; gap: 10px; }
+  .receipt .line { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--border); font-size: 0.92rem; }
+  .receipt .line:last-of-type { border-bottom: none; }
+  .receipt .line .q { color: var(--text-dim); }
+  .receipt .sum { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--border-strong); }
+  .receipt .mva { display: flex; justify-content: space-between; color: var(--text-dim); font-size: 0.8rem; margin-top: 4px; }
+  .receipt .shop { color: var(--text-dim); font-size: 0.75rem; margin-top: 14px; line-height: 1.5; }
+  .stack { display: grid; gap: 10px; }
+
+  dialog {
+    border: 1px solid var(--border-strong); border-radius: 18px; background: var(--surface); color: var(--text);
+    padding: 22px 18px 18px; width: min(420px, calc(100vw - 32px)); margin: auto;
+  }
+  dialog::backdrop { background: rgba(0,0,0,0.6); }
+  dialog h3 { font-size: 1.15rem; margin-bottom: 10px; }
+  dialog p { color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; font-size: 0.95rem; }
+  dialog .amount { font-size: 2rem; font-weight: 750; color: var(--text); display: block; margin: 8px 0; text-align: center; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(160px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--red); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: 600;
+    width: max-content; max-width: calc(100vw - 32px); z-index: 60; display: none; text-align: center;
+  }
+  .toast.show { display: block; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🥚</div>
+      <div style="min-width:0">
+        <h1 id="shop-name">Gårdsbutikk</h1>
+        <div class="sub" data-t="sub">Selvbetjent gårdsbutikk</div>
+      </div>
+    </div>
+    <button class="lang" id="lang-btn" type="button" onclick="toggleLang()">EN</button>
+  </header>
+
+  <main>
+    <div id="test-banner" class="banner test hidden" data-t="test"></div>
+    <div id="banner" class="banner hidden"></div>
+
+    <section id="view-shop">
+      <p class="lead" data-t="lead"></p>
+      <div id="products" class="grid" aria-live="polite"></div>
+    </section>
+
+    <section id="view-receipt" class="hidden">
+      <div id="receipt-status" class="status"></div>
+      <div id="receipt-box"></div>
+      <div class="stack">
+        <button class="btn primary wide hidden" id="btn-retry" type="button" onclick="backToCart()" data-t="retry"></button>
+        <button class="btn ghost wide" id="btn-new" type="button" onclick="newPurchase()" data-t="new"></button>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer"></footer>
+</div>
+
+<div class="paybar" id="paybar">
+  <div class="inner">
+    <div class="total"><span data-t="total"></span><b id="total">0 kr</b></div>
+    <div class="buttons">
+      <button class="btn vipps" id="btn-vipps" type="button" onclick="payVipps()" disabled><span>Betal med <b>Vipps</b></span></button>
+      <button class="btn cash" id="btn-cash" type="button" onclick="askCash()" disabled data-t="cash"></button>
+    </div>
+  </div>
+</div>
+
+<dialog id="cash-dialog">
+  <h3 data-t="cash_title"></h3>
+  <p><span data-t="cash_put"></span><span class="amount" id="cash-amount"></span><span data-t="cash_confirm"></span></p>
+  <div class="stack">
+    <button class="btn primary wide" id="btn-cash-ok" type="button" onclick="payCash()" data-t="cash_ok"></button>
+    <button class="btn ghost wide" type="button" onclick="document.getElementById('cash-dialog').close()" data-t="cancel"></button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="alert"></div>
+
+<script>
+'use strict';
+const T = {
+  no: {
+    sub: 'Selvbetjent gårdsbutikk',
+    lead: 'Velg varene du tar med deg, og betal med Vipps. Kontant legges i kassa.',
+    test: 'Testmodus: betalinger går til Vipps sitt testmiljø og er ikke ekte.',
+    total: 'Totalt',
+    vipps: 'Betal med <b>Vipps</b>',
+    cash: 'Kontant',
+    ja: 'På lager', få: 'Få igjen', tomt: 'Kan være tomt',
+    cash_title: 'Betal kontant',
+    cash_put: 'Legg nøyaktig',
+    cash_confirm: 'i kassa, og trykk på knappen under når pengene ligger der.',
+    cash_ok: 'Jeg har lagt pengene i kassa',
+    cancel: 'Avbryt',
+    waiting: 'Venter på Vipps …', waiting_p: 'Godkjenn betalingen i Vipps-appen. Denne siden oppdateres av seg selv.',
+    slow: 'Vi har ikke fått bekreftelse ennå', slow_p: 'Har du godkjent i Vipps, registreres betalingen automatisk i løpet av noen minutter. Du kan trygt ta med varene.',
+    paid: 'Takk for handelen!', paid_p: 'Betalingen er registrert. Ta med deg varene.',
+    cash_paid_p: 'Handelen er registrert. Husk at pengene skal ligge i kassa.',
+    aborted: 'Betalingen ble avbrutt', aborted_p: 'Ingen penger er trukket. Du kan prøve igjen.',
+    voided: 'Kjøpet er annullert', voided_p: 'Dette kjøpet er annullert av butikken.',
+    retry: 'Tilbake til handlekurven', new: 'Ny handel',
+    receipt: 'Kvittering', order: 'Ordre', sum: 'Sum', mva: 'herav MVA', paid_with: 'Betalt med',
+    m_vipps: 'Vipps', m_kontant: 'kontant', orgnr: 'Org.nr.',
+    err_load: 'Fikk ikke kontakt med butikken. Sjekk nettet og prøv igjen.',
+    err_generic: 'Noe gikk galt. Prøv igjen.',
+    no_vipps: 'Vipps er ikke tilgjengelig akkurat nå. Betal kontant.',
+    not_found: 'Fant ikke kvitteringen.',
+  },
+  en: {
+    sub: 'Self-service farm shop',
+    lead: 'Pick what you take, and pay with Vipps. Cash goes in the cash box.',
+    test: 'Test mode: payments go to the Vipps test environment and are not real.',
+    total: 'Total',
+    vipps: 'Pay with <b>Vipps</b>',
+    cash: 'Cash',
+    ja: 'In stock', få: 'Few left', tomt: 'May be sold out',
+    cash_title: 'Pay with cash',
+    cash_put: 'Put exactly',
+    cash_confirm: 'in the cash box, then tap the button below.',
+    cash_ok: 'I have put the money in the box',
+    cancel: 'Cancel',
+    waiting: 'Waiting for Vipps …', waiting_p: 'Approve the payment in the Vipps app. This page updates by itself.',
+    slow: 'No confirmation yet', slow_p: 'If you approved in Vipps, the payment will be registered automatically within a few minutes. You can take your goods.',
+    paid: 'Thank you!', paid_p: 'Your payment is registered. Enjoy your eggs.',
+    cash_paid_p: 'Your purchase is registered. Please make sure the money is in the box.',
+    aborted: 'Payment cancelled', aborted_p: 'No money was charged. You can try again.',
+    voided: 'Purchase cancelled', voided_p: 'This purchase was cancelled by the shop.',
+    retry: 'Back to cart', new: 'New purchase',
+    receipt: 'Receipt', order: 'Order', sum: 'Total', mva: 'incl. VAT', paid_with: 'Paid with',
+    m_vipps: 'Vipps', m_kontant: 'cash', orgnr: 'Org. no.',
+    err_load: 'Could not reach the shop. Check your connection and try again.',
+    err_generic: 'Something went wrong. Please try again.',
+    no_vipps: 'Vipps is not available right now. Please pay with cash.',
+    not_found: 'Receipt not found.',
+  },
+};
+const store = {
+  get(k, s = localStorage) { try { return s.getItem(k); } catch { return null; } },
+  set(k, v, s = localStorage) { try { s.setItem(k, v); } catch { /* privat modus */ } },
+  del(k, s = localStorage) { try { s.removeItem(k); } catch { /* privat modus */ } },
+};
+let lang = store.get('gb-lang') || ((navigator.language || 'no').toLowerCase().match(/^(nb|nn|no|da|sv)/) ? 'no' : 'en');
+let shop = null;
+let cart = {};
+try { cart = JSON.parse(store.get('gb-cart', sessionStorage) || '{}') || {}; } catch { cart = {}; }
+let busy = false;
+
+const t = (k) => T[lang][k] ?? T.no[k] ?? k;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function kr(ore) {
+  const v = ore / 100;
+  return v.toLocaleString(lang === 'no' ? 'nb-NO' : 'en-GB', { minimumFractionDigits: ore % 100 ? 2 : 0, maximumFractionDigits: 2 }) + ' kr';
+}
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = {};
+  try { data = await res.json(); } catch { /* ikke JSON */ }
+  if (!res.ok) throw Object.assign(new Error(data.error || t('err_generic')), { status: res.status });
+  return data;
+}
+
+function applyLang() {
+  document.documentElement.lang = lang === 'no' ? 'no' : 'en';
+  $('lang-btn').textContent = lang === 'no' ? 'EN' : 'NO';
+  document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+  $('btn-vipps').innerHTML = `<span>${t('vipps')}</span>`;
+  if (shop) { renderProducts(); renderFooter(); }
+  if (current) renderReceipt(current);
+}
+function toggleLang() {
+  lang = lang === 'no' ? 'en' : 'no';
+  store.set('gb-lang', lang);
+  applyLang();
+}
+
+function saveCart() { store.set('gb-cart', JSON.stringify(cart), sessionStorage); }
+function cartLines() {
+  return (shop?.produkter || []).filter((p) => cart[p.id] > 0).map((p) => ({ produkt: p.id, antall: cart[p.id], pris: p.pris }));
+}
+function cartTotal() { return cartLines().reduce((s, l) => s + l.antall * l.pris, 0); }
+
+function change(id, d) {
+  const n = Math.max(0, Math.min(50, (cart[id] || 0) + d));
+  if (n) cart[id] = n; else delete cart[id];
+  saveCart();
+  renderProducts();
+}
+
+function renderProducts() {
+  const ids = new Set(shop.produkter.map((p) => String(p.id)));
+  for (const k of Object.keys(cart)) if (!ids.has(k)) delete cart[k];
+  $('products').innerHTML = shop.produkter.map((p) => {
+    const n = cart[p.id] || 0;
+    const chip = p.status ? `<span class="chip ${p.status}">${esc(t(p.status))}</span>` : '';
+    return `<div class="tile${n ? ' in-cart' : ''}">
+      <div class="emoji" aria-hidden="true">${esc(p.emoji)}</div>
+      <div class="info">
+        <div class="name">${esc(p.navn)}</div>
+        ${p.beskrivelse ? `<div class="desc">${esc(p.beskrivelse)}</div>` : ''}
+        <div class="meta"><span class="price">${kr(p.pris)}</span>${chip}</div>
+      </div>
+      <div class="stepper">
+        ${n ? `<button type="button" aria-label="Fjern én ${esc(p.navn)}" onclick="change(${p.id},-1)">−</button><span class="n">${n}</span>` : ''}
+        <button type="button" class="plus" aria-label="Legg til én ${esc(p.navn)}" onclick="change(${p.id},1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  const total = cartTotal();
+  $('total').textContent = kr(total);
+  $('btn-vipps').disabled = !total || busy || !shop.vipps;
+  $('btn-cash').disabled = !total || busy;
+}
+
+function renderFooter() {
+  const b = shop?.butikk || {};
+  const parts = [b.butikknavn, b.adresse, b.orgnr ? `${t('orgnr')} ${b.orgnr}` : '', b.kontakt].filter(Boolean).map(esc);
+  $('footer').innerHTML = parts.join(' · ');
+}
+
+async function loadShop() {
+  try {
+    shop = await api('GET', '/api/butikk');
+  } catch {
+    $('products').innerHTML = `<div class="banner test">${esc(t('err_load'))}</div>`;
+    return;
+  }
+  $('shop-name').textContent = shop.butikk.butikknavn || 'Gårdsbutikk';
+  document.title = shop.butikk.butikknavn || 'Gårdsbutikk';
+  $('banner').textContent = shop.butikk.melding || '';
+  $('banner').classList.toggle('hidden', !shop.butikk.melding);
+  $('test-banner').classList.toggle('hidden', !shop.vippsTest);
+  if (!shop.vipps) { $('banner').textContent = t('no_vipps'); $('banner').classList.remove('hidden'); }
+  renderProducts();
+  renderFooter();
+}
+
+async function payVipps() {
+  if (busy) return;
+  busy = true; renderProducts();
+  try {
+    const r = await api('POST', '/api/butikk/ordrer', { metode: 'vipps', linjer: cartLines() });
+    store.set('gb-last', r.ref, sessionStorage);
+    window.location.href = r.redirectUrl;
+  } catch (e) {
+    toast(e.message);
+    busy = false; renderProducts();
+    if (e.status === 409) loadShop();
+  }
+}
+
+function askCash() {
+  $('cash-amount').textContent = kr(cartTotal());
+  $('cash-dialog').showModal();
+}
+
+async function payCash() {
+  if (busy) return;
+  busy = true;
+  $('btn-cash-ok').disabled = true;
+  try {
+    const r = await api('POST', '/api/butikk/ordrer', { metode: 'kontant', linjer: cartLines() });
+    $('cash-dialog').close();
+    cart = {}; saveCart();
+    history.pushState(null, '', `/kvittering?ref=${r.ref}`);
+    showReceipt({ ordre: r.ordre, butikk: shop.butikk });
+  } catch (e) {
+    $('cash-dialog').close();
+    toast(e.message);
+    if (e.status === 409) loadShop();
+  } finally {
+    busy = false;
+    $('btn-cash-ok').disabled = false;
+    if (shop) renderProducts();
+  }
+}
+
+// --- Kvittering ----------------------------------------------------------
+let current = null;
+let pollStart = 0;
+let pollTimer = null;
+
+function showView(receipt) {
+  $('view-shop').classList.toggle('hidden', receipt);
+  $('view-receipt').classList.toggle('hidden', !receipt);
+  $('paybar').classList.toggle('hidden', receipt);
+  window.scrollTo(0, 0);
+}
+
+function renderReceipt(data) {
+  const o = data.ordre;
+  const b = data.butikk || {};
+  const slow = Date.now() - pollStart > 90000;
+  let html;
+  if (o.status === 'venter') {
+    html = slow
+      ? `<div class="big">⏳</div><h2>${esc(t('slow'))}</h2><p>${esc(t('slow_p'))}</p>`
+      : `<div class="spinner" aria-hidden="true"></div><h2>${esc(t('waiting'))}</h2><p>${esc(t('waiting_p'))}</p>`;
+  } else if (o.status === 'betalt') {
+    html = `<div class="big">✅</div><h2>${esc(t('paid'))}</h2><p>${esc(t(o.metode === 'kontant' ? 'cash_paid_p' : 'paid_p'))}</p>`;
+  } else if (o.status === 'avbrutt') {
+    html = `<div class="big">↩️</div><h2>${esc(t('aborted'))}</h2><p>${esc(t('aborted_p'))}</p>`;
+  } else {
+    html = `<div class="big">🚫</div><h2>${esc(t('voided'))}</h2><p>${esc(t('voided_p'))}</p>`;
+  }
+  $('receipt-status').innerHTML = html;
+  $('btn-retry').classList.toggle('hidden', o.status !== 'avbrutt');
+
+  if (o.status === 'betalt' || o.status === 'annullert') {
+    const when = new Date(o.betalt || o.opprettet).toLocaleString(lang === 'no' ? 'nb-NO' : 'en-GB',
+      { timeZone: 'Europe/Oslo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const sats = [...new Set(o.linjer.map((l) => l.mvaSats))];
+    $('receipt-box').innerHTML = `<div class="receipt">
+      <div class="head"><span>${esc(t('receipt'))} · ${esc(t('order'))} ${o.nr}</span><span>${esc(when)}</span></div>
+      ${o.linjer.map((l) => `<div class="line"><span>${esc(l.navn)} <span class="q">× ${l.antall}</span></span><span>${kr(l.antall * l.pris)}</span></div>`).join('')}
+      <div class="sum"><span>${esc(t('sum'))}</span><span>${kr(o.sum)}</span></div>
+      <div class="mva"><span>${esc(t('mva'))}${sats.length === 1 ? ` ${sats[0]} %` : ''}</span><span>${kr(o.mva)}</span></div>
+      <div class="mva"><span>${esc(t('paid_with'))}</span><span>${esc(t('m_' + o.metode))}</span></div>
+      <div class="shop">${[b.butikknavn, b.adresse, b.orgnr ? `${t('orgnr')} ${b.orgnr}` : ''].filter(Boolean).map(esc).join('<br>')}</div>
+    </div>`;
+  } else {
+    $('receipt-box').innerHTML = '';
+  }
+}
+
+function showReceipt(data) {
+  current = data;
+  showView(true);
+  renderReceipt(data);
+  if (data.ordre.status === 'betalt') { cart = {}; saveCart(); }
+}
+
+async function pollReceipt(ref) {
+  clearTimeout(pollTimer);
+  try {
+    const data = await api('GET', `/api/butikk/ordrer/${encodeURIComponent(ref)}`);
+    showReceipt(data);
+    if (data.ordre.status === 'venter') {
+      const age = Date.now() - pollStart;
+      pollTimer = setTimeout(() => pollReceipt(ref), age < 90000 ? 2000 : 10000);
+    }
+  } catch (e) {
+    showView(true);
+    if (e.status === 404 || e.status === 400) {
+      $('receipt-status').innerHTML = `<div class="big">🤔</div><h2>${esc(t('not_found'))}</h2>`;
+    } else {
+      $('receipt-status').innerHTML = `<div class="big">📶</div><h2>${esc(t('err_load'))}</h2>`;
+      pollTimer = setTimeout(() => pollReceipt(ref), 4000);
+    }
+  }
+}
+
+function backToCart() {
+  clearTimeout(pollTimer);
+  current = null;
+  history.pushState(null, '', '/');
+  showView(false);
+  loadShop();
+}
+function newPurchase() {
+  cart = {}; saveCart();
+  backToCart();
+}
+
+function route() {
+  const params = new URLSearchParams(location.search);
+  const ref = location.pathname.startsWith('/kvittering') ? params.get('ref') : null;
+  if (ref) {
+    pollStart = Date.now();
+    showView(true);
+    pollReceipt(ref);
+  } else {
+    current = null;
+    showView(false);
+  }
+}
+
+window.addEventListener('popstate', route);
+// Tilbake fra Vipps via nettleserens tilbakeknapp: siden kan komme fra bfcache.
+window.addEventListener('pageshow', (e) => { if (e.persisted) { busy = false; if (shop) renderProducts(); } });
+applyLang();
+loadShop();
+route();
+</script>
+</body>
+</html>

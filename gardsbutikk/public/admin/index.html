@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Gårdsbutikk – admin</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0C111C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Butikk-admin">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  :root {
+    --bg: #0C111C;
+    --surface: #172136;
+    --surface-2: #1E2A44;
+    --surface-3: #273553;
+    --border: #243048;
+    --border-strong: #33436B;
+    --text: #F3F5F7;
+    --text-muted: #C4CBD1;
+    --text-dim: #8E969D;
+    --accent: #7CC36A;
+    --accent-soft: rgba(124,195,106,0.13);
+    --amber: #E3A445;
+    --amber-soft: rgba(227,164,69,0.13);
+    --red: #E5675A;
+    --red-soft: rgba(229,103,90,0.13);
+    --cyan: #4FC3E8;
+    --cyan-soft: rgba(79,195,232,0.13);
+    --vipps: #FF5B24;
+    --vipps-soft: rgba(255,91,36,0.14);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --nav-h: 64px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { color-scheme: dark; }
+  body {
+    font-family: var(--font); background: var(--bg);
+    background-image: linear-gradient(180deg, #17223A 0%, var(--bg) 380px); background-repeat: no-repeat;
+    color: var(--text); min-height: 100vh; -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font-family: var(--font); touch-action: manipulation; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  .app { max-width: 760px; margin: 0 auto; padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px); }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 30; background: rgba(12,17,28,0.85);
+    backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top) + 14px) 16px 14px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(160deg, #223050, #0C111C); display: grid; place-items: center; font-size: 19px; border: 1px solid var(--border-strong); }
+  .brand h1 { font-size: 1.1rem; font-weight: 650; }
+  .brand .sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
+  .who { font-size: 0.72rem; color: var(--text-dim); text-align: right; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .view { padding: 16px; display: none; }
+  .view.active { display: block; }
+  .alert { border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.86rem; line-height: 1.45; margin-bottom: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+  .alert.red { background: var(--red-soft); border: 1px solid rgba(229,103,90,0.45); color: #F2A096; }
+  .alert.amber { background: var(--amber-soft); border: 1px solid rgba(227,164,69,0.4); color: #F0C079; }
+  .alert button { background: none; border: 1px solid currentColor; color: inherit; border-radius: 8px; padding: 7px 12px; font-weight: 650; font-size: 0.8rem; white-space: nowrap; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card-title { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 2px; scrollbar-width: none; }
+  .chips button { background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); border-radius: 999px; padding: 8px 14px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+  .chips button.on { background: var(--accent); border-color: var(--accent); color: #0C111C; }
+
+  .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  @media (min-width: 620px) { .kpis { grid-template-columns: repeat(4, 1fr); } }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .kpi .l { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 700; }
+  .kpi .v { font-size: 1.35rem; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kpi .s { font-size: 0.75rem; color: var(--text-dim); margin-top: 3px; }
+
+  .stock { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .stock:last-child { border-bottom: none; padding-bottom: 0; }
+  .stock:first-of-type { padding-top: 0; }
+  .stock .e { width: 44px; height: 44px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border-strong); display: grid; place-items: center; font-size: 22px; }
+  .stock .n { font-weight: 650; }
+  .stock .d { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+  .stock .q { font-size: 1.4rem; font-weight: 750; text-align: right; font-variant-numeric: tabular-nums; }
+  .stock .q.ja { color: var(--accent); } .stock .q.få { color: var(--amber); } .stock .q.tomt { color: var(--red); } .stock .q.ukjent { color: var(--text-dim); font-size: 0.85rem; font-weight: 600; }
+  .stock .acts { grid-column: 2 / 4; display: flex; gap: 8px; }
+
+  .btn { border: none; border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; font-weight: 650; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn.primary { background: var(--accent); color: #0C111C; }
+  .btn.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn.danger { background: var(--red-soft); color: var(--red); border: 1px solid rgba(229,103,90,0.45); }
+  .btn.small { padding: 7px 11px; font-size: 0.8rem; }
+  .btn.wide { width: 100%; padding: 13px; font-size: 0.95rem; }
+
+  .order { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .order:last-child { border-bottom: none; }
+  .order .top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .order .nr { font-weight: 650; }
+  .order .time { font-size: 0.78rem; color: var(--text-dim); }
+  .order .lines { grid-column: 1 / 3; font-size: 0.8rem; color: var(--text-muted); }
+  .order .sum { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .order.dim { opacity: 0.55; }
+  .tag { font-size: 0.66rem; font-weight: 700; border-radius: 999px; padding: 3px 8px; letter-spacing: 0.02em; }
+  .tag.vipps { background: var(--vipps-soft); color: var(--vipps); }
+  .tag.kontant { background: var(--cyan-soft); color: var(--cyan); }
+  .tag.betalt { background: var(--accent-soft); color: var(--accent); }
+  .tag.venter { background: var(--amber-soft); color: var(--amber); }
+  .tag.avbrutt, .tag.annullert { background: var(--red-soft); color: var(--red); }
+
+  .big-amount { font-size: 2.2rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; }
+  .row { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .row:last-child { border-bottom: none; }
+  .pos { color: var(--accent); } .neg { color: var(--red); }
+
+  label { display: block; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin: 12px 0 6px; }
+  input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); border-radius: 10px; padding: 12px; font-size: 1rem; }
+  textarea { resize: vertical; min-height: 60px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 0.9rem; }
+  .check input { width: 22px; height: 22px; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; }
+  .actions .btn { flex: 1; padding: 13px; }
+
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(18,26,41,0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--border-strong); padding-bottom: env(safe-area-inset-bottom); }
+  .nav .inner { max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
+  .nav button { background: none; border: none; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 0.66rem; font-weight: 600; }
+  .nav button .i { font-size: 1.25rem; line-height: 1; filter: grayscale(0.6); }
+  .nav button.on { color: var(--text); }
+  .nav button.on .i { filter: none; }
+
+  dialog { border: 1px solid var(--border-strong); border-radius: 18px; background: var(--surface); color: var(--text); padding: 20px 18px 18px; width: min(480px, calc(100vw - 24px)); margin: auto; max-height: calc(100vh - 40px); }
+  dialog::backdrop { background: rgba(0,0,0,0.6); }
+  dialog h3 { font-size: 1.1rem; margin-bottom: 6px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px); transform: translateX(-50%); padding: 12px 16px; border-radius: 12px; font-size: 0.88rem; font-weight: 600; z-index: 60; display: none; max-width: calc(100vw - 32px); width: max-content; text-align: center; }
+  .toast.show { display: block; }
+  .toast.ok { background: var(--accent); color: #0C111C; }
+  .toast.err { background: var(--red); color: #fff; }
+  .empty { color: var(--text-dim); font-size: 0.88rem; text-align: center; padding: 18px 0; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🛒</div>
+      <div><h1>Gårdsbutikk</h1><div class="sub">Admin</div></div>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div id="login-alert" class="alert red hidden" style="margin:16px 16px 0">
+    <span>Du er ikke innlogget, eller innloggingen har utløpt.</span>
+    <button type="button" onclick="location.reload()">Logg inn</button>
+  </div>
+
+  <!-- Oversikt -->
+  <section class="view active" id="v-oversikt">
+    <div class="chips" data-period="oversikt"></div>
+    <div id="venter-alert" class="alert amber hidden"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="card">
+      <div class="card-title"><span>Lager</span><span id="stock-hint" class="muted" style="text-transform:none;letter-spacing:0"></span></div>
+      <div id="stock"></div>
+    </div>
+  </section>
+
+  <!-- Salg -->
+  <section class="view" id="v-salg">
+    <div class="chips" data-period="salg"></div>
+    <div class="card">
+      <div class="card-title"><span id="orders-title">Salg</span><button class="btn ghost small" type="button" onclick="exportExcel()">⬇︎ Excel</button></div>
+      <div id="orders"></div>
+    </div>
+  </section>
+
+  <!-- Kasse -->
+  <section class="view" id="v-kasse">
+    <div class="card">
+      <div class="card-title">Forventet i kassa</div>
+      <div class="big-amount" id="cash-expected">–</div>
+      <div class="muted" id="cash-since"></div>
+      <label for="cash-counted">Telt beløp (kr)</label>
+      <input id="cash-counted" inputmode="decimal" placeholder="f.eks. 340">
+      <label for="cash-comment">Kommentar (valgfritt)</label>
+      <input id="cash-comment" maxlength="200">
+      <button class="btn primary wide" style="margin-top:14px" type="button" onclick="saveCash()">Registrer telling og tøm kassa</button>
+      <p class="muted" style="margin-top:10px">Telling betyr at kassa tømmes. Neste forventede beløp regnes fra nå.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Tidligere tellinger</div>
+      <div id="cash-list"></div>
+    </div>
+  </section>
+
+  <!-- Varer -->
+  <section class="view" id="v-varer">
+    <div class="card">
+      <div class="card-title"><span>Varer og priser</span><button class="btn primary small" type="button" onclick="editProduct()">＋ Ny vare</button></div>
+      <div id="products"></div>
+    </div>
+    <p class="muted" style="padding:0 4px">Prisene gjelder fra neste handel. Gamle kvitteringer beholder prisen kunden betalte. Varer kan ikke slettes, men skjules ved å fjerne «Til salgs».</p>
+  </section>
+
+  <!-- Innstillinger -->
+  <section class="view" id="v-innst">
+    <div class="card">
+      <div class="card-title">Vipps</div>
+      <div id="vipps-status" class="muted">Laster …</div>
+      <button class="btn ghost" style="margin-top:12px" type="button" onclick="testVipps()">Test tilkoblingen</button>
+    </div>
+    <div class="card">
+      <div class="card-title">QR-plakat til døra</div>
+      <div class="muted" id="shop-url"></div>
+      <div class="actions"><button class="btn ghost" type="button" onclick="openShop()">Åpne butikken</button><button class="btn primary" type="button" onclick="printQr()">Skriv ut QR-plakat</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Butikkinformasjon (vises for kunden og på kvitteringen)</div>
+      <label for="s-butikknavn">Navn</label><input id="s-butikknavn" maxlength="60">
+      <label for="s-adresse">Adresse</label><input id="s-adresse" maxlength="100">
+      <label for="s-orgnr">Org.nr. (f.eks. «NO 999 888 777 MVA»)</label><input id="s-orgnr" maxlength="40">
+      <label for="s-kontakt">Kontakt (telefon eller e-post)</label><input id="s-kontakt" maxlength="60">
+      <label for="s-melding">Melding øverst i butikken (valgfritt)</label><textarea id="s-melding" maxlength="200" placeholder="f.eks. Nye egg hver dag kl. 16"></textarea>
+      <label for="s-butikk_url">Butikkens adresse for QR-koden (tom = automatisk)</label><input id="s-butikk_url" maxlength="200" placeholder="https://gardsbutikk.….workers.dev">
+      <button class="btn primary wide" style="margin-top:16px" type="button" onclick="saveSettings()">Lagre</button>
+    </div>
+  </section>
+</div>
+
+<nav class="nav">
+  <div class="inner">
+    <button type="button" class="on" data-view="oversikt" onclick="go('oversikt')"><span class="i">📊</span>Oversikt</button>
+    <button type="button" data-view="salg" onclick="go('salg')"><span class="i">🧾</span>Salg</button>
+    <button type="button" data-view="kasse" onclick="go('kasse')"><span class="i">💵</span>Kasse</button>
+    <button type="button" data-view="varer" onclick="go('varer')"><span class="i">📦</span>Varer</button>
+    <button type="button" data-view="innst" onclick="go('innst')"><span class="i">⚙️</span>Oppsett</button>
+  </div>
+</nav>
+
+<dialog id="dlg"><div id="dlg-body"></div></dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kr = (ore) => (ore / 100).toLocaleString('nb-NO', { minimumFractionDigits: ore % 100 ? 2 : 0, maximumFractionDigits: 2 }) + ' kr';
+const krNum = (ore) => Math.round(ore) / 100;
+const fmtTime = (iso, opts) => iso ? new Date(iso).toLocaleString('nb-NO', { timeZone: 'Europe/Oslo', ...opts }) : '';
+const dt = (iso) => fmtTime(iso, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const STATUS = { betalt: 'Betalt', venter: 'Venter', avbrutt: 'Avbrutt', annullert: 'Annullert' };
+const METODE = { vipps: 'Vipps', kontant: 'Kontant' };
+const MOVE = { salg: 'Salg', retur: 'Retur (annullert)', 'påfyll': 'Påfyll', telling: 'Telling' };
+
+let today = new Date().toISOString().slice(0, 10);
+const periods = { oversikt: 'dag', salg: 'dag' };
+let ordersCache = [];
+let products = [];
+let settingsCache = null;
+
+function toast(msg, ok = true) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast show ${ok ? 'ok' : 'err'}`;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { el.className = 'toast'; }, ok ? 2500 : 5000);
+}
+
+async function api(method, path, body) {
+  let res;
+  try {
+    res = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin' });
+  } catch {
+    throw new Error('Fikk ikke kontakt. Sjekk nettet.');
+  }
+  let data = {};
+  try { data = await res.json(); } catch { /* ikke JSON, f.eks. Access-innlogging */ }
+  if (res.status === 401 || (!res.ok && !data.error && res.redirected)) { $('login-alert').classList.remove('hidden'); throw new Error('Ikke innlogget.'); }
+  if (!res.ok) throw new Error(data.error || `Feil (${res.status})`);
+  return data;
+}
+
+function addDays(d, n) { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+const PERIODS = [
+  ['dag', 'I dag', () => [today, today]],
+  ['igar', 'I går', () => [addDays(today, -1), addDays(today, -1)]],
+  ['uke', '7 dager', () => [addDays(today, -6), today]],
+  ['mnd', 'Denne måneden', () => [today.slice(0, 8) + '01', today]],
+  ['fmnd', 'Forrige måned', () => { const first = today.slice(0, 8) + '01'; const last = addDays(first, -1); return [last.slice(0, 8) + '01', last]; }],
+  ['aar', 'Hittil i år', () => [today.slice(0, 5) + '01-01', today]],
+];
+function periodRange(view) { return PERIODS.find((p) => p[0] === periods[view])[2](); }
+function periodQuery(view) { const [fra, til] = periodRange(view); return `fra=${fra}&til=${til}`; }
+function renderChips() {
+  document.querySelectorAll('[data-period]').forEach((el) => {
+    const v = el.dataset.period;
+    el.innerHTML = PERIODS.map(([k, label]) => `<button type="button" class="${periods[v] === k ? 'on' : ''}" onclick="setPeriod('${v}','${k}')">${label}</button>`).join('');
+  });
+}
+function setPeriod(view, key) { periods[view] = key; renderChips(); load(view); }
+
+function go(view) {
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `v-${view}`));
+  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+  try { localStorage.setItem('gb-admin-view', view); } catch { /* privat modus */ }
+  window.scrollTo(0, 0);
+  load(view);
+}
+
+async function load(view) {
+  try {
+    if (view === 'oversikt') await loadOverview();
+    else if (view === 'salg') await loadOrders();
+    else if (view === 'kasse') await loadCash();
+    else if (view === 'varer') await loadProducts();
+    else if (view === 'innst') await loadSettings();
+  } catch (e) { toast(e.message, false); }
+}
+
+// --- Oversikt -------------------------------------------------------------
+async function loadOverview() {
+  const d = await api('GET', `/api/admin/oversikt?${periodQuery('oversikt')}`);
+  const t = d.totalt;
+  $('kpis').innerHTML = [
+    ['Omsetning', kr(t.omsetning), `${t.antall} salg`],
+    ['Vipps', kr(t.vipps), `${t.antallVipps} salg`],
+    ['Kontant', kr(t.kontant), `${t.antallKontant} salg`],
+    ['Herav MVA', kr(t.mva), 'inngår i omsetningen'],
+  ].map(([l, v, s]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+  const va = $('venter-alert');
+  va.innerHTML = `<span>${d.venter} Vipps-betaling${d.venter === 1 ? '' : 'er'} venter på bekreftelse. De sjekkes automatisk hvert 2. minutt.</span><button type="button" onclick="go('salg')">Se salg</button>`;
+  va.classList.toggle('hidden', !d.venter);
+  products = d.produkter;
+  const active = d.produkter.filter((p) => p.aktiv);
+  $('stock-hint').textContent = active.some((p) => p.lager === null) ? 'Registrer lager med «Telling»' : '';
+  $('stock').innerHTML = active.map((p) => {
+    const q = p.lager === null ? '<div class="q ukjent">ikke registrert</div>' : `<div class="q ${p.status}">${p.lager}</div>`;
+    const svinn = p.svinn ? ` · svinn ${p.svinn}` : '';
+    return `<div class="stock">
+      <div class="e">${esc(p.emoji)}</div>
+      <div><div class="n">${esc(p.navn)}</div><div class="d">Solgt ${p.solgt} · ${kr(p.omsetning)}${svinn}</div></div>
+      ${q}
+      <div class="acts">
+        <button class="btn primary small" type="button" onclick="stockDialog(${p.id},'påfyll')">＋ Påfyll</button>
+        <button class="btn ghost small" type="button" onclick="stockDialog(${p.id},'telling')">Telling</button>
+        <button class="btn ghost small" type="button" onclick="stockHistory(${p.id})">Historikk</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty">Ingen varer til salgs.</div>';
+}
+
+function openDialog(html) { $('dlg-body').innerHTML = html; $('dlg').showModal(); }
+function closeDialog() { $('dlg').close(); }
+
+function stockDialog(id, type) {
+  const p = products.find((x) => x.id === id);
+  const fill = type === 'påfyll';
+  openDialog(`<h3>${fill ? 'Påfyll' : 'Telling'}: ${esc(p.emoji)} ${esc(p.navn)}</h3>
+    <p class="muted">${fill ? 'Hvor mange legger du i butikken nå?' : `Hvor mange står i butikken nå? Systemet sier ${p.lager ?? 'ingenting ennå'}. Differansen føres som svinn eller overskudd.`}</p>
+    <label for="sd-n">Antall</label><input id="sd-n" inputmode="numeric" pattern="[0-9]*" autofocus>
+    <label for="sd-k">Kommentar (valgfritt)</label><input id="sd-k" maxlength="200">
+    <div class="actions"><button class="btn ghost" type="button" onclick="closeDialog()">Avbryt</button>
+    <button class="btn primary" type="button" onclick="saveStock(${id},'${type}')">Lagre</button></div>`);
+}
+async function saveStock(id, type) {
+  const antall = $('sd-n').value.trim();
+  if (!/^\d+$/.test(antall)) { toast('Skriv et helt tall.', false); return; }
+  try {
+    const r = await api('POST', '/api/admin/lager', { produkt: id, type, antall: Number(antall), kommentar: $('sd-k').value });
+    closeDialog();
+    toast(`Lager for ${r.vare.navn}: ${r.vare.lager}`);
+    loadOverview();
+  } catch (e) { toast(e.message, false); }
+}
+async function stockHistory(id) {
+  const p = products.find((x) => x.id === id);
+  try {
+    const d = await api('GET', `/api/admin/lager/${id}`);
+    openDialog(`<h3>${esc(p.emoji)} ${esc(p.navn)} – lagerhistorikk</h3>
+      <div style="max-height:60vh;overflow:auto;margin-top:8px">${d.bevegelser.map((m) => `<div class="row">
+        <span>${esc(MOVE[m.type] || m.type)}${m.type === 'telling' ? ` (telt ${m.telt})` : ''}<br><span class="muted">${dt(m.tid)} · ${esc(m.av)}${m.kommentar ? ` · ${esc(m.kommentar)}` : ''}</span></span>
+        <b class="${m.delta > 0 ? 'pos' : m.delta < 0 ? 'neg' : ''}">${m.delta > 0 ? '+' : ''}${m.delta}</b></div>`).join('') || '<div class="empty">Ingen bevegelser ennå.</div>'}</div>
+      <div class="actions"><button class="btn ghost" type="button" onclick="closeDialog()">Lukk</button></div>`);
+  } catch (e) { toast(e.message, false); }
+}
+
+// --- Salg -----------------------------------------------------------------
+async function loadOrders() {
+  const d = await api('GET', `/api/admin/ordrer?${periodQuery('salg')}`);
+  ordersCache = d.ordrer;
+  const paid = d.ordrer.filter((o) => o.status === 'betalt');
+  $('orders-title').textContent = `${paid.length} betalte salg · ${kr(paid.reduce((s, o) => s + o.sum, 0))}`;
+  $('orders').innerHTML = d.ordrer.map((o) => `<div class="order${o.status === 'betalt' || o.status === 'venter' ? '' : ' dim'}" onclick="orderDialog('${o.ref}')">
+      <div class="top"><span class="nr">#${o.nr}</span><span class="tag ${o.metode}">${METODE[o.metode]}</span><span class="tag ${o.status}">${STATUS[o.status]}</span><span class="time">${fmtTime(o.opprettet, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span></div>
+      <div class="sum">${kr(o.sum)}</div>
+      <div class="lines">${o.linjer.map((l) => `${l.antall} × ${esc(l.navn)}`).join(', ')}</div>
+    </div>`).join('') || '<div class="empty">Ingen salg i perioden.</div>';
+}
+
+function orderDialog(ref) {
+  const o = ordersCache.find((x) => x.ref === ref);
+  if (!o) return;
+  const canVoid = o.status === 'betalt';
+  openDialog(`<h3>Ordre #${o.nr}</h3>
+    <div class="muted">${dt(o.opprettet)} · <span class="tag ${o.metode}">${METODE[o.metode]}</span> <span class="tag ${o.status}">${STATUS[o.status]}</span></div>
+    <div style="margin-top:10px">${o.linjer.map((l) => `<div class="row"><span>${l.antall} × ${esc(l.navn)} à ${kr(l.pris)}</span><span>${kr(l.antall * l.pris)}</span></div>`).join('')}
+    <div class="row"><b>Sum</b><b>${kr(o.sum)}</b></div><div class="row"><span class="muted">Herav MVA</span><span class="muted">${kr(o.mva)}</span></div></div>
+    ${o.betalt ? `<p class="muted">Betalt ${dt(o.betalt)}</p>` : ''}
+    ${o.vippsStatus ? `<p class="muted">Vipps-status: ${esc(o.vippsStatus)}</p>` : ''}
+    ${o.status === 'annullert' ? `<p class="muted">Annullert ${dt(o.avsluttet)} av ${esc(o.annullertAv)}: ${esc(o.annullertGrunn)}</p>` : ''}
+    <p class="muted" style="word-break:break-all">Referanse: ${esc(o.ref)}</p>
+    ${canVoid ? `<label for="od-g">Grunn for annullering</label><input id="od-g" maxlength="200" placeholder="f.eks. feiltrykk, kunden fikk ikke varen">` : ''}
+    <div class="actions">
+      <button class="btn ghost" type="button" onclick="closeDialog()">Lukk</button>
+      ${o.status === 'venter' && o.metode === 'vipps' ? `<button class="btn primary" type="button" onclick="checkOrder('${o.ref}')">Sjekk mot Vipps</button>` : ''}
+      ${canVoid ? `<button class="btn danger" type="button" onclick="voidOrder('${o.ref}')">${o.metode === 'vipps' ? 'Annuller og betal tilbake' : 'Annuller'}</button>` : ''}
+    </div>`);
+}
+async function checkOrder(ref) {
+  try {
+    const r = await api('POST', `/api/admin/ordrer/${ref}/sjekk`, {});
+    closeDialog();
+    toast(`Status: ${STATUS[r.ordre.status]}`);
+    loadOrders();
+  } catch (e) { toast(e.message, false); }
+}
+async function voidOrder(ref) {
+  const grunn = $('od-g').value.trim();
+  if (!grunn) { toast('Skriv en grunn.', false); return; }
+  const o = ordersCache.find((x) => x.ref === ref);
+  if (!confirm(o.metode === 'vipps' ? `Betale tilbake ${kr(o.sum)} til kunden i Vipps, og legge varene tilbake på lager?` : 'Annullere salget og legge varene tilbake på lager?')) return;
+  try {
+    await api('POST', `/api/admin/ordrer/${ref}/annuller`, { grunn });
+    closeDialog();
+    toast('Ordren er annullert');
+    loadOrders();
+  } catch (e) { toast(e.message, false); }
+}
+
+// --- Kasse ----------------------------------------------------------------
+function renderCash(d) {
+  $('cash-expected').textContent = kr(d.forventet);
+  $('cash-since').textContent = d.siden ? `Kontantsalg siden siste telling ${dt(d.siden)}` : 'Kontantsalg siden start (ingen telling ennå)';
+  $('cash-list').innerHTML = d.tellinger.map((c) => `<div class="row">
+      <span>${dt(c.til)}<br><span class="muted">${esc(c.av)}${c.kommentar ? ` · ${esc(c.kommentar)}` : ''}</span></span>
+      <span style="text-align:right">${kr(c.telt)} <span class="muted">av ${kr(c.forventet)}</span><br>
+      <b class="${c.differanse < 0 ? 'neg' : c.differanse > 0 ? 'pos' : ''}">${c.differanse > 0 ? '+' : ''}${kr(c.differanse)}</b></span></div>`).join('')
+    || '<div class="empty">Ingen tellinger ennå.</div>';
+}
+async function loadCash() { renderCash(await api('GET', '/api/admin/kasse')); }
+async function saveCash() {
+  const telt = $('cash-counted').value.trim().replace(',', '.');
+  if (!telt || Number.isNaN(Number(telt))) { toast('Skriv beløpet som lå i kassa.', false); return; }
+  try {
+    const d = await api('POST', '/api/admin/kasse', { telt, kommentar: $('cash-comment').value });
+    $('cash-counted').value = ''; $('cash-comment').value = '';
+    renderCash(d);
+    const diff = d.tellinger[0].differanse;
+    toast(diff === 0 ? 'Kassa stemmer' : `Registrert. Differanse ${diff > 0 ? '+' : ''}${kr(diff)}`, diff >= 0);
+  } catch (e) { toast(e.message, false); }
+}
+
+// --- Varer ----------------------------------------------------------------
+async function loadProducts() {
+  const d = await api('GET', '/api/admin/varer');
+  products = d.varer;
+  $('products').innerHTML = d.varer.map((p) => `<div class="stock" style="cursor:pointer" onclick="editProduct(${p.id})">
+      <div class="e">${esc(p.emoji)}</div>
+      <div><div class="n">${esc(p.navn)}${p.aktiv ? '' : ' <span class="tag avbrutt">Skjult</span>'}</div><div class="d">${esc(p.beskrivelse)}</div></div>
+      <div class="q" style="font-size:1.05rem">${kr(p.pris)}</div>
+    </div>`).join('');
+}
+function editProduct(id) {
+  const p = products.find((x) => x.id === id) || { navn: '', beskrivelse: '', emoji: '🥚', pris: 0, mvaSats: 15, aktiv: true, sortering: products.length + 1, lavGrense: 3 };
+  openDialog(`<h3>${id ? 'Rediger vare' : 'Ny vare'}</h3>
+    <div class="grid2"><div><label for="p-navn">Navn</label><input id="p-navn" maxlength="60" value="${esc(p.navn)}"></div>
+    <div><label for="p-pris">Pris (kr, inkl. MVA)</label><input id="p-pris" inputmode="decimal" value="${p.pris ? krNum(p.pris) : ''}"></div></div>
+    <label for="p-besk">Beskrivelse</label><input id="p-besk" maxlength="120" value="${esc(p.beskrivelse)}">
+    <div class="grid2"><div><label for="p-emoji">Ikon (emoji)</label><input id="p-emoji" maxlength="8" value="${esc(p.emoji)}"></div>
+    <div><label for="p-mva">MVA</label><select id="p-mva">${[15, 25, 12, 0].map((s) => `<option value="${s}" ${s === p.mvaSats ? 'selected' : ''}>${s} %${s === 15 ? ' (mat)' : ''}</option>`).join('')}</select></div></div>
+    <div class="grid2"><div><label for="p-sort">Rekkefølge</label><input id="p-sort" inputmode="numeric" value="${p.sortering}"></div>
+    <div><label for="p-lav">«Få igjen» ved</label><input id="p-lav" inputmode="numeric" value="${p.lavGrense}"></div></div>
+    <label class="check"><input type="checkbox" id="p-aktiv" ${p.aktiv ? 'checked' : ''}> Til salgs (vises i butikken)</label>
+    <div class="actions"><button class="btn ghost" type="button" onclick="closeDialog()">Avbryt</button>
+    <button class="btn primary" type="button" onclick="saveProduct(${id || 'null'})">Lagre</button></div>`);
+}
+async function saveProduct(id) {
+  try {
+    await api('POST', '/api/admin/varer', {
+      id, navn: $('p-navn').value, pris: $('p-pris').value, beskrivelse: $('p-besk').value, emoji: $('p-emoji').value,
+      mvaSats: Number($('p-mva').value), sortering: $('p-sort').value, lavGrense: $('p-lav').value, aktiv: $('p-aktiv').checked,
+    });
+    closeDialog();
+    toast('Lagret');
+    loadProducts();
+  } catch (e) { toast(e.message, false); }
+}
+
+// --- Oppsett --------------------------------------------------------------
+const SETTINGS = ['butikknavn', 'adresse', 'orgnr', 'kontakt', 'melding', 'butikk_url'];
+function shopUrl() { return settingsCache?.innstillinger.butikk_url || settingsCache?.innstillinger.butikk_url_auto || ''; }
+async function loadSettings() {
+  settingsCache = await api('GET', '/api/admin/innstillinger');
+  for (const k of SETTINGS) $(`s-${k}`).value = settingsCache.innstillinger[k] || '';
+  const v = settingsCache.vipps;
+  $('vipps-status').innerHTML = v.konfigurert
+    ? `Tilkoblet <b>${v.miljo === 'prod' ? 'produksjon (ekte betalinger)' : 'testmiljø (ikke ekte penger)'}</b> · salgssted ${esc(v.msn)}`
+    : 'Ikke satt opp. Butikken tar bare kontant til Vipps-nøklene er lagt inn (se README).';
+  const url = shopUrl();
+  $('shop-url').innerHTML = url ? `Butikken: <b>${esc(url)}</b>` : 'Adressen blir kjent første gang butikksiden åpnes. Du kan også skrive den inn under.';
+}
+async function saveSettings() {
+  const body = Object.fromEntries(SETTINGS.map((k) => [k, $(`s-${k}`).value]));
+  try {
+    const r = await api('POST', '/api/admin/innstillinger', body);
+    toast(r.endret.length ? 'Lagret' : 'Ingen endringer');
+    loadSettings();
+  } catch (e) { toast(e.message, false); }
+}
+async function testVipps() {
+  try {
+    const r = await api('POST', '/api/admin/vipps/test', {});
+    toast(`Vipps svarer (${r.miljo === 'prod' ? 'produksjon' : 'test'}) ✓`);
+  } catch (e) { toast(e.message, false); }
+}
+function openShop() { const u = shopUrl(); if (u) window.open(u, '_blank', 'noopener'); else toast('Butikkadressen er ikke kjent ennå.', false); }
+function printQr() {
+  const url = shopUrl();
+  if (!url) { toast('Butikkadressen er ikke kjent ennå. Åpne butikken én gang, eller skriv adressen inn.', false); return; }
+  const name = settingsCache?.innstillinger.butikknavn || 'Gårdsbutikk';
+  const w = window.open('', '_blank');
+  if (!w) { toast('Tillat popup-vinduer for å skrive ut.', false); return; }
+  w.document.write(`<!DOCTYPE html><html lang="no"><head><meta charset="utf-8"><title>QR-plakat</title>
+    <style>body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;padding:40px 20px;color:#111}
+    h1{font-size:44px;margin:0 0 8px}p{font-size:24px;margin:8px 0}#qr{display:inline-block;margin:28px 0;padding:16px;border:2px solid #111;border-radius:16px}
+    .v{display:inline-block;background:#FF5B24;color:#fff;font-weight:700;border-radius:12px;padding:10px 22px;font-size:26px;margin-top:6px}
+    small{display:block;margin-top:20px;color:#555;font-size:16px;word-break:break-all}@media print{button{display:none}}</style></head>
+    <body><h1>🥚 ${esc(name)}</h1><p>Skann, velg varer og betal</p><div id="qr"></div><div><span class="v">Betal med Vipps</span></div>
+    <p style="margin-top:18px">Kontant? Legg pengene i kassa og trykk «Kontant».</p><small>${esc(url)}</small>
+    <p><button onclick="print()" style="font-size:18px;padding:10px 20px;margin-top:20px">Skriv ut</button></p>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <script>new QRCode(document.getElementById('qr'),{text:${JSON.stringify(url)},width:360,height:360,correctLevel:QRCode.CorrectLevel.M});<\/script>
+    </body></html>`);
+  w.document.close();
+}
+
+// --- Excel-eksport (samme minimale XLSX-generator som Hønseri-appen) ---------
+function exportExcel() {
+  if (!ordersCache.length) { toast('Ingen salg i perioden.', false); return; }
+  const rows = [['Ordre', 'Dato', 'Tid', 'Betaling', 'Status', 'Vare', 'Antall', 'Pris (kr)', 'Linjesum (kr)', 'MVA-sats %', 'MVA (kr)', 'Ordresum (kr)', 'Annullert grunn', 'Referanse']];
+  for (const o of [...ordersCache].reverse()) {
+    const when = o.betalt || o.opprettet;
+    for (const l of o.linjer) {
+      const line = l.antall * l.pris;
+      rows.push([o.nr, fmtTime(when, { year: 'numeric', month: '2-digit', day: '2-digit' }), fmtTime(when, { hour: '2-digit', minute: '2-digit' }),
+        METODE[o.metode], STATUS[o.status], l.navn, l.antall, krNum(l.pris), krNum(line), l.mvaSats,
+        krNum(Math.round((line * l.mvaSats) / (100 + l.mvaSats))), krNum(o.sum), o.annullertGrunn || '', o.ref]);
+    }
+  }
+  const [fra, til] = periodRange('salg');
+  const blob = new Blob([makeXlsx(rows, 'Salg')], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gardsbutikk_salg_${fra}${fra === til ? '' : `_til_${til}`}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function makeXlsx(rows, sheetName) {
+  const colName = (n) => { let s = ''; n++; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26 | 0; } return s; };
+  const x = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let sheetRows = '';
+  rows.forEach((row, r) => {
+    let cells = '';
+    row.forEach((val, c) => {
+      const ref = colName(c) + (r + 1);
+      if (typeof val === 'number' && isFinite(val)) cells += `<c r="${ref}"><v>${val}</v></c>`;
+      else cells += `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${x(val == null ? '' : val)}</t></is></c>`;
+    });
+    sheetRows += `<row r="${r + 1}">${cells}</row>`;
+  });
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${x(sheetName).slice(0, 31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`;
+  return zipStore([
+    { name: '[Content_Types].xml', data: contentTypes },
+    { name: '_rels/.rels', data: rootRels },
+    { name: 'xl/workbook.xml', data: workbookXml },
+    { name: 'xl/_rels/workbook.xml.rels', data: workbookRels },
+    { name: 'xl/worksheets/sheet1.xml', data: sheetXml },
+  ]);
+}
+const CRC_TABLE = (() => { const tb = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); tb[n] = c >>> 0; } return tb; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(); const chunks = []; const central = []; let offset = 0;
+  const u16 = (n) => [n & 0xFF, (n >>> 8) & 0xFF];
+  const u32 = (n) => [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
+  files.forEach((f) => {
+    const nameBytes = enc.encode(f.name); const dataBytes = enc.encode(f.data);
+    const crc = crc32(dataBytes); const size = dataBytes.length;
+    chunks.push(new Uint8Array([].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0))), nameBytes, dataBytes);
+    central.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0), u32(crc), u32(size), u32(size), u16(nameBytes.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))), nameBytes);
+    offset += 30 + nameBytes.length + size;
+  });
+  const centralStart = offset; let centralSize = 0; central.forEach((c) => { centralSize += c.length; });
+  const end = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(centralSize), u32(centralStart), u16(0)));
+  return new Blob([...chunks, ...central, end]);
+}
+
+// --- Start ------------------------------------------------------------------
+(async () => {
+  renderChips();
+  try {
+    const me = await api('GET', '/api/admin/me');
+    today = me.today;
+    $('who').textContent = me.user;
+  } catch (e) { toast(e.message, false); return; }
+  let view = 'oversikt';
+  try { view = localStorage.getItem('gb-admin-view') || 'oversikt'; } catch { /* privat modus */ }
+  go(document.getElementById(`v-${view}`) ? view : 'oversikt');
+})();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  const active = document.querySelector('.view.active')?.id.replace('v-', '');
+  if (active === 'oversikt' || active === 'salg' || active === 'kasse') load(active);
+});
+</script>
+</body>
+</html>

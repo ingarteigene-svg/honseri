@@ -1,0 +1,9 @@
+# Kun for lokal utvikling (npm run dev). Kopier til .dev.vars – den fila er i .gitignore.
+# DEV_USER omgår innlogging til adminsiden, og virker bare på localhost.
+DEV_USER=utvikler@example.no
+# Valgfritt: Vipps-testnøkler fra portal.vipps.no (fanen «Test»)
+# VIPPS_CLIENT_ID=
+# VIPPS_CLIENT_SECRET=
+# VIPPS_SUBSCRIPTION_KEY=
+# VIPPS_MSN=
+# VIPPS_ENV=test

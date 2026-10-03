@@ -1,0 +1,33 @@
+# Gårdsbutikk – selvbetjent salg med Vipps og kontant (Cloudflare Worker + D1)
+#
+# Ingen hemmeligheter eller driftsdata her. database_id = "SETTES_VED_DEPLOY" fylles inn av
+# scripts/prod.mjs ved publisering. Samme fil publiseres to ganger:
+#   gardsbutikk        → butikken for kundene (ROLE = "butikk", åpen, med cron)
+#   gardsbutikk-admin  → adminsiden (ROLE = "admin", bak Cloudflare Access, uten cron)
+
+name = "gardsbutikk"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[vars]
+ROLE = "butikk"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gardsbutikk"
+database_id = "SETTES_VED_DEPLOY"
+migrations_dir = "migrations"
+
+# Fullfører Vipps-betalinger der kunden lukket Vipps uten å gå tilbake til kvitteringen.
+[triggers]
+crons = ["*/2 * * * *"]
+
+[observability]
+enabled = true
