@@ -69,6 +69,10 @@ finnes, hoppes over, så det gjør ingenting om samme fil leses inn to ganger. B
 Google-arket eller Excel-filene, ikke begge. De gamle Excel-filene har ikke ID-er, så samme
 registrering fra begge kildene blir to rader.
 
+Loggen fra telefonen til Lars Andreas (29.06–05.10.2026) er allerede lagt inn med
+`data/2026-10-06-gamal-logg-lars-andreas.sql`. Den kjøres ved publisering, og den hopper over dager som finnes fra før.
+Han trenger ikke flytte noe selv.
+
 Når alt er flyttet og alle bruker den nye appen, kan den gamle Hønseri-appen legges bort.
 
 ## Slik fungerer det
@@ -119,7 +123,7 @@ cd eggregistrering
 npm install
 cp .dev.vars.example .dev.vars   # lokal testbruker, virker bare på localhost
 npm run dev                      # http://localhost:8787 med lokal database
-npm test                         # 23 automatiske tester
+npm test                         # automatiske tester
 ```
 
 Testene kjører mot en ekte lokal Worker med egen database, og dekker lagring, validering,
