@@ -12,7 +12,7 @@
 //   ACCESS_TEAM_DOMAIN       t.d. klokkargarden.cloudflareaccess.com (same team som Pallsporing)
 //   HONSERI_ACCESS_AUD       «Application Audience (AUD) Tag» for Hønseri-applikasjonen i Access
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -90,6 +90,13 @@ try {
     const team = process.env.ACCESS_TEAM_DOMAIN;
     const aud = process.env.HONSERI_ACCESS_AUD;
     prod('d1', 'migrations', 'apply', 'DB', '--remote');
+    // Data som skal inn éin gong (t.d. flytting frå den gamle appen). Filene kan
+    // køyrast fleire gonger utan å lage dobbelt, så dei blir køyrde ved kvar publisering.
+    const dataDir = join(root, 'data');
+    for (const f of existsSync(dataDir) ? readdirSync(dataDir).filter((n) => n.endsWith('.sql')).sort() : []) {
+      console.log(`\nLegg inn data frå data/${f} …`);
+      prod('d1', 'execute', 'DB', '--remote', '--yes', '--file', `data/${f}`);
+    }
     if (team && aud) {
       prod('deploy', '--var', `ACCESS_TEAM_DOMAIN:${team}`, '--var', `ACCESS_AUD:${aud}`);
     } else {

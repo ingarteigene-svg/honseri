@@ -4,7 +4,7 @@
   "description": "Hønseri – dagleg eggregistrering for Klokkargarden (Cloudflare Worker + D1)",
   "scripts": {
     "dev": "wrangler d1 migrations apply DB --local && wrangler dev --test-scheduled",
-    "test": "node --test --test-concurrency=1 test/push.test.mjs test/auth.test.mjs test/api.test.mjs",
+    "test": "node --test --test-concurrency=1 test/push.test.mjs test/auth.test.mjs test/api.test.mjs test/data.test.mjs",
     "deploy": "node scripts/prod.mjs deploy",
     "backup": "node scripts/prod.mjs backup"
   },
