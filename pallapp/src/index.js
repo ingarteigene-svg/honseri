@@ -100,6 +100,21 @@ function layPeriod(body, today) {
 
 const placeholders = (n) => Array(n).fill('?').join(',');
 
+// D1 tillater maks 100 parametere per spørring: lange id-lister deles opp.
+const chunks = (arr, n = 90) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
+
+async function palletsByIds(db, columns, ids) {
+  const out = [];
+  for (const part of chunks(ids)) {
+    const { results } = await db
+      .prepare(`SELECT ${columns} FROM pallets WHERE id IN (${placeholders(part.length)})`)
+      .bind(...part)
+      .all();
+    out.push(...results);
+  }
+  return out;
+}
+
 /** Oversetter feil fra databasen (constraints/triggere) til forståelige meldinger. */
 function dbError(e) {
   const m = String(e?.message || e);
@@ -193,8 +208,28 @@ async function searchPallets(env, q, maxLimit = 1000) {
     where.push('p.lay_from <= ? AND p.lay_to >= ?');
     args.push(to, from);
   }
+  // Leveringsdato: én dato alene tolkes som én enkelt dag.
+  const dfrom = q.get('dfrom') || q.get('dto');
+  const dto = q.get('dto') || q.get('dfrom');
+  if (dfrom) {
+    requireDate(dfrom, 'Levert fra');
+    requireDate(dto, 'Levert til');
+    if (dfrom > dto) throw new HttpError(400, 'Levert fra kan ikke være senere enn levert til.');
+    where.push('d.delivery_date >= ? AND d.delivery_date <= ?');
+    args.push(dfrom, dto);
+  }
+  const STATUS_SQL = {
+    lager: 'p.delivery_id IS NULL AND p.voided = 0', // på lager, også sperrede
+    leverbar: 'p.delivery_id IS NULL AND p.voided = 0 AND p.blocked = 0',
+    levert: 'p.delivery_id IS NOT NULL',
+    sperret: 'p.blocked = 1 AND p.voided = 0',
+    annullert: 'p.voided = 1',
+  };
   const status = q.get('status');
-  if (status === 'lager') where.push('p.delivery_id IS NULL AND p.voided = 0 AND p.blocked = 0');
+  if (status) {
+    if (!Object.hasOwn(STATUS_SQL, status)) throw new HttpError(400, 'Ukjent status i søket.');
+    where.push(STATUS_SQL[status]);
+  }
 
   const limit = Math.min(Number(q.get('limit')) || 200, maxLimit);
   const sql = `${PALLET_SELECT}
@@ -395,6 +430,74 @@ function recallCsv(o) {
 // Ruter
 // ---------------------------------------------------------------------------
 
+function deliveryLine(b) {
+  return {
+    ids: requireIdList(b?.pallet_ids, 'pall'),
+    storeId: requireId(b?.store_id, 'butikk'),
+    orderRef: cleanText(b?.order_ref, 'Ordre-/fakturanummer', { required: true, max: 60 }),
+  };
+}
+
+/** Lagrer én eller flere leveringer med samme dato i én transaksjon. */
+async function createDeliveries(env, user, date, lines) {
+  const db = env.DB;
+  const stores = new Map((await db.prepare('SELECT id, name FROM stores').all()).results.map((s) => [s.id, s.name]));
+  if (lines.some((l) => !stores.has(l.storeId))) throw new HttpError(400, 'Velg en butikk.');
+
+  const all = lines.flatMap((l) => l.ids);
+  if (new Set(all).size !== all.length) throw new HttpError(400, 'Samme pall er valgt i flere leveringer. Ingenting ble lagret.');
+  if (all.length > 500) throw new HttpError(400, 'For mange paller i én operasjon (maks 500).');
+
+  // Forhåndskontroll for tydelige feilmeldinger. Selve garantien ligger i databasen
+  // (trigger pallets_guard_delivery), som også stopper samtidige leveringer.
+  const sel = await palletsByIds(db, 'id, pallet_no, delivery_id, blocked, voided', all);
+  if (sel.length !== all.length) throw new HttpError(400, 'En eller flere valgte paller finnes ikke.');
+  const bad = sel.filter((p) => p.delivery_id || p.blocked || p.voided);
+  if (bad.length) {
+    throw new HttpError(
+      409,
+      `Disse pallene er ikke på lager og kan ikke leveres: ${bad.map((p) => p.pallet_no).join(', ')}. Ingenting ble lagret.`,
+    );
+  }
+
+  const stmts = [];
+  for (const l of lines) {
+    l.uid = crypto.randomUUID();
+    stmts.push(
+      db
+        .prepare('INSERT INTO deliveries (uid, store_id, order_ref, delivery_date, created_by) VALUES (?, ?, ?, ?, ?)')
+        .bind(l.uid, l.storeId, l.orderRef, date, user),
+    );
+    for (const part of chunks(l.ids)) {
+      stmts.push(
+        db
+          .prepare(
+            `UPDATE pallets SET delivery_id = (SELECT id FROM deliveries WHERE uid = ?),
+             updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_by = ?
+             WHERE id IN (${placeholders(part.length)})`,
+          )
+          .bind(l.uid, user, ...part),
+      );
+    }
+  }
+  await write(env, user, 'levert', null, stmts);
+
+  const out = [];
+  for (const l of lines) {
+    const delivery = await db.prepare('SELECT * FROM deliveries WHERE uid = ?').bind(l.uid).first();
+    const { results: pallets } = await db
+      .prepare('SELECT pallet_no, trays FROM pallets WHERE delivery_id = ? ORDER BY pallet_no')
+      .bind(delivery.id)
+      .all();
+    if (pallets.length !== l.ids.length) {
+      // Skal ikke kunne skje; varsle tydelig hvis det gjør det.
+      throw new HttpError(500, 'Leveringen ble lagret, men antall paller stemmer ikke. Kontroller i Oversikt.');
+    }
+    out.push({ delivery: { ...delivery, store_name: stores.get(l.storeId) }, pallets });
+  }
+  return out;
+}
+
 async function readBody(request) {
   try {
     return await request.json();
@@ -454,6 +557,24 @@ async function route(request, env, user) {
 
   // --- Paller ---
   if (path === '/api/pallets' && method === 'GET') return json(await searchPallets(env, url.searchParams));
+
+  if (path === '/api/next-pallet-no' && method === 'GET') {
+    // Forslag til neste pallnummer: høyeste rene tallnummer i bruk + 1.
+    // Annullerte paller teller ikke som «høyeste», men numrene deres hoppes over (de er reservert).
+    const row = await db
+      .prepare(
+        `SELECT max(CAST(pallet_no AS INTEGER)) AS n FROM pallets
+         WHERE voided = 0 AND pallet_no NOT GLOB '*[^0-9]*' AND length(pallet_no) <= 15`,
+      )
+      .first();
+    if (row?.n == null) return json({ next: null });
+    let n = row.n + 1;
+    for (let i = 0; i < 50; i++, n++) {
+      const taken = await db.prepare('SELECT 1 AS x FROM pallets WHERE pallet_no = ?').bind(String(n)).first();
+      if (!taken) return json({ next: String(n) });
+    }
+    return json({ next: null });
+  }
 
   if (path === '/api/pallets.csv' && method === 'GET') {
     // Eksport til Excel: alle paller (eller søketreffet) med gjeldende status.
@@ -558,52 +679,18 @@ async function route(request, env, user) {
   // --- Leveringer ---
   if (path === '/api/deliveries' && method === 'POST') {
     const b = await readBody(request);
-    const ids = requireIdList(b.pallet_ids, 'pall');
-    const storeId = requireId(b.store_id, 'butikk');
-    const orderRef = cleanText(b.order_ref, 'Ordre-/fakturanummer', { required: true, max: 60 });
     const date = requireDate(b.delivery_date, 'Leveringsdato');
+    const [r] = await createDeliveries(env, user, date, [deliveryLine(b)]);
+    return json(r, 201);
+  }
 
-    const store = await db.prepare('SELECT id, name FROM stores WHERE id = ?').bind(storeId).first();
-    if (!store) throw new HttpError(400, 'Velg en butikk.');
-
-    // Forhåndskontroll for tydelige feilmeldinger. Selve garantien ligger i databasen
-    // (trigger pallets_guard_delivery), som også stopper samtidige leveringer.
-    const { results: sel } = await db
-      .prepare(`SELECT id, pallet_no, delivery_id, blocked, voided FROM pallets WHERE id IN (${placeholders(ids.length)})`)
-      .bind(...ids)
-      .all();
-    if (sel.length !== ids.length) throw new HttpError(400, 'En eller flere valgte paller finnes ikke.');
-    const bad = sel.filter((p) => p.delivery_id || p.blocked || p.voided);
-    if (bad.length) {
-      throw new HttpError(
-        409,
-        `Disse pallene er ikke på lager og kan ikke leveres: ${bad.map((p) => p.pallet_no).join(', ')}. Ingenting ble lagret.`,
-      );
-    }
-
-    const uid = crypto.randomUUID();
-    await write(env, user, 'levert', null, [
-      db
-        .prepare('INSERT INTO deliveries (uid, store_id, order_ref, delivery_date, created_by) VALUES (?, ?, ?, ?, ?)')
-        .bind(uid, storeId, orderRef, date, user),
-      db
-        .prepare(
-          `UPDATE pallets SET delivery_id = (SELECT id FROM deliveries WHERE uid = ?),
-           updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), updated_by = ?
-           WHERE id IN (${placeholders(ids.length)})`,
-        )
-        .bind(uid, user, ...ids),
-    ]);
-    const delivery = await db.prepare('SELECT * FROM deliveries WHERE uid = ?').bind(uid).first();
-    const { results: pallets } = await db
-      .prepare('SELECT pallet_no, trays FROM pallets WHERE delivery_id = ? ORDER BY pallet_no')
-      .bind(delivery.id)
-      .all();
-    if (pallets.length !== ids.length) {
-      // Skal ikke kunne skje; varsle tydelig hvis det gjør det.
-      throw new HttpError(500, 'Leveringen ble lagret, men antall paller stemmer ikke. Kontroller i Oversikt.');
-    }
-    return json({ delivery: { ...delivery, store_name: store.name }, pallets }, 201);
+  if (path === '/api/deliveries/batch' && method === 'POST') {
+    // Leveringsrute: flere butikker med felles leveringsdato, lagret samlet (alt eller ingenting).
+    const b = await readBody(request);
+    const date = requireDate(b.delivery_date, 'Leveringsdato');
+    if (!Array.isArray(b.deliveries) || b.deliveries.length === 0) throw new HttpError(400, 'Ruten har ingen leveringer.');
+    if (b.deliveries.length > 50) throw new HttpError(400, 'For mange leveringer i én rute (maks 50).');
+    return json({ deliveries: await createDeliveries(env, user, date, b.deliveries.map(deliveryLine)) }, 201);
   }
 
   if (seg[1] === 'deliveries' && seg.length === 3 && method === 'PUT') {
@@ -642,10 +729,7 @@ async function route(request, env, user) {
     // Merk berørte paller: ny tilbakekalling, eller legg til i eksisterende.
     const b = await readBody(request);
     const ids = requireIdList(b.pallet_ids, 'pall');
-    const { results: found } = await db
-      .prepare(`SELECT id FROM pallets WHERE id IN (${placeholders(ids.length)})`)
-      .bind(...ids)
-      .all();
+    const found = await palletsByIds(db, 'id', ids);
     if (found.length !== ids.length) throw new HttpError(400, 'En eller flere valgte paller finnes ikke.');
 
     let recallId;

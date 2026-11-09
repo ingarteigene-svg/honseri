@@ -109,7 +109,7 @@ ukentlige sikkerhetskopien (`npm run backup`, se under).
 
 ## Bruk
 
-**Ny pall:** Skriv pallnummeret fra kortet og kontroller verpedato (standard: i dag, eller
+**Ny pall:** Skriv pallnummeret fra kortet, eller trykk **Bruk neste nummer** når forslaget stemmer med kortet. Kontroller verpedato (standard: i dag, eller
 sist brukte dato samme dag). Trykk «Flere verpedager?» hvis pallen dekker flere dager. Trykk
 **200** eller **228** brett (appen husker siste valg), eller «Annet antall» for en ufullstendig pall, og
 trykk **Lagre pall**. Grønn boks betyr lagret i databasen. Pakkedato og bruker lagres automatisk.
@@ -118,7 +118,11 @@ trykk **Lagre pall**. Grønn boks betyr lagret i databasen. Pakkedato og bruker 
 kontroller leveringsdato. Trykk **Registrer levering**, kontroller pallnumre og antall brett i
 bekreftelsen, og trykk **Bekreft levering**. Bare paller på lager vises. Butikker kan rettes under «Butikker» nederst.
 
-**Oversikt:** Søk på pallnummer, ordre-/fakturanummer, butikk og/eller verpedato. Datosøk finner
+*Flere butikker samme dag (rute):* Fyll ut første butikk og trykk **+ Flere butikker**. Leveringen legges i ruten
+øverst, og du fyller ut neste. Trykk **Registrer rute** til slutt. Hele ruten lagres samlet med felles
+leveringsdato, og ingenting er lagret før du har bekreftet. Leveringsdatoen du velger, huskes resten av dagen.
+
+**Oversikt:** Søk på pallnummer, ordre-/fakturanummer, butikk, status, verpedato og/eller leveringsdato. Søk på verpedato finner
 alle paller der verpeperioden **overlapper** søkeperioden, og én dato alene betyr den ene dagen.
 Trykk på et pallnummer for detaljer, rettelser og full historikk. **Eksporter til Excel** laster ned
 alle paller, eller bare søketreffet, som en CSV-fil (semikolon og UTF-8) som åpnes direkte i Excel.
@@ -190,7 +194,7 @@ cd pallapp
 npm install
 cp .dev.vars.example .dev.vars   # lokal testbruker, virker bare på localhost
 npm run dev                      # http://localhost:8787 med lokal database
-npm test                         # 24 automatiske tester
+npm test                         # 30 automatiske tester
 ```
 
 Testene (`test/`) kjører mot en ekte lokal Worker med egen database og dekker blant annet:
