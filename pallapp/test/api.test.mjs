@@ -409,6 +409,158 @@ test('eksport til Excel (CSV) av alle paller og av søketreff', async () => {
   assert.equal(filtered.trim().split('\r\n').length, 2); // overskrift + pall 401 (402 er flyttet til annen ordre)
 });
 
+test('neste pallnummer: høyeste tallnummer + 1, hopper over reserverte numre', async () => {
+  // Egen tallserie høyt over de andre testene
+  await newPallet('90010');
+  await newPallet('90012'); // registrert i «feil» rekkefølge
+  await newPallet('90011');
+  let r = await call('GET', '/api/next-pallet-no');
+  assert.equal(r.status, 200);
+  assert.equal(r.data.next, '90013');
+  // Annullert pall teller ikke som høyeste, men nummeret er reservert og hoppes over
+  await newPallet('90013');
+  await call('POST', `/api/pallets/${await idOf('90013')}/void`, { reason: 'Feil nummer' });
+  r = await call('GET', '/api/next-pallet-no');
+  assert.equal(r.data.next, '90014');
+  // Forslaget kan faktisk registreres
+  assert.equal((await newPallet(r.data.next)).status, 201);
+  assert.equal((await call('GET', '/api/next-pallet-no')).data.next, '90015');
+});
+
+test('leveringsrute: flere butikker lagres samlet med felles dato', async () => {
+  for (const no of ['91001', '91002', '91003', '91004']) await newPallet(no);
+  const [a, b, c, d] = [await idOf('91001'), await idOf('91002'), await idOf('91003'), await idOf('91004')];
+  const date = daysAgo(-1); // i morgen
+  const r = await call('POST', '/api/deliveries/batch', {
+    delivery_date: date,
+    deliveries: [
+      { store_id: storeA.id, order_ref: 'RUTE-1', pallet_ids: [a, b] },
+      { store_id: storeB.id, order_ref: 'RUTE-2', pallet_ids: [c] },
+    ],
+  }, 'per@gard.no');
+  assert.equal(r.status, 201, JSON.stringify(r.data));
+  assert.equal(r.data.deliveries.length, 2);
+  assert.deepEqual(r.data.deliveries[0].pallets.map((p) => p.pallet_no), ['91001', '91002']);
+  assert.equal(r.data.deliveries[1].delivery.store_name, 'Joker Brandal');
+  const p3 = (await call('GET', '/api/pallets?no=91003')).data.pallets[0];
+  assert.equal(p3.status, 'levert');
+  assert.equal(p3.order_ref, 'RUTE-2');
+  assert.equal(p3.delivery_date, date);
+  // Hver levering er logget med bruker
+  const hist = (await call('GET', `/api/pallets/${c}`)).data.history;
+  assert.ok(hist.some((h) => h.action === 'levert' && h.user === 'per@gard.no'));
+  // 91004 var ikke med og står fortsatt på lager
+  assert.equal((await call('GET', '/api/pallets?no=91004')).data.pallets[0].status, 'lager');
+  assert.ok(d);
+});
+
+test('leveringsrute: én feil stopper hele ruten (alt eller ingenting)', async () => {
+  for (const no of ['92001', '92002']) await newPallet(no);
+  const [a, b] = [await idOf('92001'), await idOf('92002')];
+  const levert = await idOf('91001');
+  const batch = (deliveries) => call('POST', '/api/deliveries/batch', { delivery_date: today(), deliveries });
+
+  // Én linje inneholder en pall som allerede er levert
+  let r = await batch([
+    { store_id: storeA.id, order_ref: 'FEIL-1', pallet_ids: [a] },
+    { store_id: storeB.id, order_ref: 'FEIL-2', pallet_ids: [b, levert] },
+  ]);
+  assert.equal(r.status, 409);
+  assert.match(r.data.error, /91001/);
+  // Samme pall i to linjer
+  r = await batch([
+    { store_id: storeA.id, order_ref: 'FEIL-3', pallet_ids: [a] },
+    { store_id: storeB.id, order_ref: 'FEIL-4', pallet_ids: [a, b] },
+  ]);
+  assert.equal(r.status, 400);
+  assert.match(r.data.error, /flere leveringer/);
+  // Manglende ordrenummer, ukjent butikk, tom rute
+  assert.equal((await batch([{ store_id: storeA.id, order_ref: ' ', pallet_ids: [a] }])).status, 400);
+  assert.equal((await batch([{ store_id: 999999, order_ref: 'X', pallet_ids: [a] }])).status, 400);
+  assert.equal((await batch([])).status, 400);
+
+  // Ingenting ble lagret
+  for (const no of ['92001', '92002']) {
+    assert.equal((await call('GET', `/api/pallets?no=${no}`)).data.pallets[0].status, 'lager');
+  }
+  const n = JSON.parse(sql("SELECT count(*) AS n FROM deliveries WHERE order_ref LIKE 'FEIL-%'"))[0].results[0].n;
+  await waitReady();
+  assert.equal(n, 0);
+});
+
+test('samtidige ruter med samme pall: nøyaktig én lykkes', async () => {
+  for (const no of ['93001', '93002', '93003']) await newPallet(no);
+  const [a, b, c] = [await idOf('93001'), await idOf('93002'), await idOf('93003')];
+  const results = await Promise.all(Array.from({ length: 6 }, (_, i) =>
+    call('POST', '/api/deliveries/batch', {
+      delivery_date: today(),
+      deliveries: [
+        { store_id: storeA.id, order_ref: `KAPP-${i}-A`, pallet_ids: [i % 2 ? a : b] },
+        { store_id: storeB.id, order_ref: `KAPP-${i}-B`, pallet_ids: [c] },
+      ],
+    }, `bruker${i}@gard.no`)));
+  assert.equal(results.filter((r) => r.status === 201).length, 1);
+  assert.equal(results.filter((r) => r.status === 409).length, 5);
+  const n = JSON.parse(sql("SELECT count(*) AS n FROM deliveries WHERE order_ref LIKE 'KAPP-%'"))[0].results[0].n;
+  await waitReady();
+  assert.equal(n, 2); // bare vinnerens to leveringer finnes
+});
+
+test('en levering med over 100 paller lagres (deles opp mot databasens parametergrense)', async () => {
+  const nos = Array.from({ length: 120 }, (_, i) => String(94000 + i));
+  for (const no of nos) assert.equal((await newPallet(no, { trays: 1 })).status, 201);
+  const all = (await call('GET', '/api/pallets?no=94&limit=1000')).data.pallets.filter((p) => nos.includes(p.pallet_no));
+  assert.equal(all.length, 120);
+  const r = await call('POST', '/api/deliveries', {
+    pallet_ids: all.map((p) => p.id), store_id: storeA.id, order_ref: 'STOR-1', delivery_date: today(),
+  });
+  assert.equal(r.status, 201, JSON.stringify(r.data).slice(0, 300));
+  assert.equal(r.data.pallets.length, 120);
+  // …og kan merkes som berørt samlet
+  const rc = await call('POST', '/api/recalls', { pallet_ids: all.map((p) => p.id), title: 'Stor test' });
+  assert.equal(rc.status, 201, JSON.stringify(rc.data).slice(0, 300));
+  assert.equal((await call('GET', `/api/recalls/${rc.data.recall_id}`)).data.summary.pallets, 120);
+});
+
+test('søk på leveringsdato og status', async () => {
+  const nos = async (q) => {
+    const r = await call('GET', `/api/pallets?${q}&limit=1000`);
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+    return r.data.pallets.map((p) => p.pallet_no);
+  };
+  // Leveringsdato: ruten over ble levert «i morgen»
+  const tomorrow = daysAgo(-1);
+  assert.deepEqual((await nos(`dfrom=${tomorrow}`)).sort(), ['91001', '91002', '91003']);
+  assert.deepEqual((await nos(`dto=${tomorrow}`)).sort(), ['91001', '91002', '91003']);
+  assert.deepEqual((await nos(`dfrom=${tomorrow}&dto=${tomorrow}&store=${storeB.id}`)), ['91003']);
+  // Intervall som dekker 26–27 dager siden (fra tilbakekallingstesten)
+  assert.deepEqual((await nos(`dfrom=${daysAgo(27)}&dto=${daysAgo(26)}`)).sort(), ['800', '801', '802']);
+  assert.equal((await call('GET', `/api/pallets?dfrom=${today()}&dto=${daysAgo(3)}`)).status, 400);
+  // Paller som ikke er levert, er aldri med i et søk på leveringsdato
+  assert.ok(!(await nos(`dfrom=${daysAgo(400)}&dto=${daysAgo(-400)}`)).includes('91004'));
+
+  // Status
+  const lager = await nos('status=lager');
+  assert.ok(lager.includes('91004') && lager.includes('92001'));
+  assert.ok(!lager.includes('91001') && !lager.includes('700') && !lager.includes('90013'));
+  const levert = await nos('status=levert');
+  assert.ok(levert.includes('91001') && !levert.includes('91004'));
+  const annullert = await nos('status=annullert');
+  assert.ok(annullert.includes('700') && annullert.includes('90013') && !annullert.includes('91004'));
+
+  // Sperret: vises under «på lager» og «sperret», men ikke som leverbar
+  const rc = await call('POST', '/api/recalls', { pallet_ids: [await idOf('91004')], title: 'Sperretest' });
+  await call('POST', `/api/recalls/${rc.data.recall_id}/block`, {});
+  assert.ok((await nos('status=sperret')).includes('91004'));
+  assert.ok((await nos('status=lager')).includes('91004'));
+  assert.ok(!(await nos('status=leverbar')).includes('91004'));
+  assert.equal((await call('GET', '/api/pallets?status=tull')).status, 400);
+
+  // Eksporten følger de samme filtrene
+  const csv = await (await fetch(`${BASE}/api/pallets.csv?dfrom=${tomorrow}&status=levert`, { headers: { 'X-Dev-User': 'a@b.no' } })).text();
+  assert.equal(csv.trim().split('\r\n').length, 4);
+});
+
 test('skriveoperasjoner uten JSON avvises', async () => {
   const res = await fetch(`${BASE}/api/pallets`, { method: 'POST', headers: { 'X-Dev-User': 'a@b.no', 'Content-Type': 'text/plain' }, body: '{}' });
   assert.equal(res.status, 415);

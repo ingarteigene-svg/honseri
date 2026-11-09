@@ -243,3 +243,13 @@ dialog ul { padding-left: 20px; }
 .sizes .size.on span { color: var(--primary-text); }
 div.field { margin-bottom: 16px; font-weight: 600; }
 div.field > span.lbl { display: block; margin-bottom: 6px; }
+
+/* Leveringsrute */
+.route-list { list-style: none; padding: 0; margin: 0 0 8px; }
+.route-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.route-list li:last-child { border-bottom: 0; }
+.route-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.confirm-stop { margin-top: 12px; }
+.confirm-stop .confirm-list { margin: 6px 0 0; }
+.hint.warn { color: var(--badge-recall); font-weight: 700; }
+dialog { overflow-y: auto; }

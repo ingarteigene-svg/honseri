@@ -6,7 +6,13 @@ const EGG_PER_TRAY = 30;
 const PALLET_SIZES = [200, 228];
 const view = document.getElementById('view');
 const dialog = document.getElementById('dialog');
-let me = { user: '', today: new Date().toISOString().slice(0, 10) };
+let me = { user: '' };
+
+/** Dagens dato i Norge (ÅÅÅÅ-MM-DD). Regnes ut hver gang den brukes, slik at appen
+ *  ikke henger igjen på gårsdagen når den står åpen over natten. */
+const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Oslo' }).format(new Date());
+let renderedDay = today();
+let deliveryDateMemo = null; // sist valgte leveringsdato samme dag
 
 // ---------------------------------------------------------------------------
 // Hjelpere
@@ -163,15 +169,15 @@ function storeOptions(stores, selected, emptyLabel = 'Velg butikk …') {
 
 async function viewNew() {
   const last = store.get('pall.sist') || {};
-  const sameDay = last.dato === me.today;
+  const sameDay = last.dato === today();
   const result = h('div', { id: 'result' });
 
   const no = h('input', {
     class: 'big', id: 'pallet_no', inputMode: 'numeric', autocomplete: 'off', autocapitalize: 'characters',
     enterKeyHint: 'done', maxLength: 20, required: true, 'aria-label': 'Pallnummer',
   });
-  const from = h('input', { type: 'date', id: 'lay_from', required: true, max: me.today, value: sameDay && last.fra ? last.fra : me.today });
-  const to = h('input', { type: 'date', id: 'lay_to', max: me.today, value: sameDay && last.til ? last.til : from.value });
+  const from = h('input', { type: 'date', id: 'lay_from', required: true, max: today(), value: sameDay && last.fra ? last.fra : today() });
+  const to = h('input', { type: 'date', id: 'lay_to', max: today(), value: sameDay && last.til ? last.til : from.value });
   const multi = sameDay && last.til && last.til !== last.fra;
   const toWrap = field('Verpedato til', to);
   toWrap.classList.toggle('hidden', !multi);
@@ -218,6 +224,23 @@ async function viewNew() {
   other.addEventListener('input', updHint);
   updHint();
 
+  // Forslag til neste pallnummer (kortene er løpende). Fylles inn først når brukeren trykker,
+  // slik at nummeret alltid kontrolleres mot kortet.
+  const nextBtn = h('button', { type: 'button', id: 'next_no', class: 'btn-sm hidden', style: 'margin:-6px 0 16px', onclick: () => {
+    no.value = nextBtn.dataset.no;
+    no.focus();
+  } });
+  async function loadNext() {
+    try {
+      const { next } = await api('GET', '/api/next-pallet-no');
+      nextBtn.dataset.no = next || '';
+      nextBtn.textContent = next ? `Bruk neste nummer: ${next}` : '';
+      nextBtn.classList.toggle('hidden', !next);
+    } catch {
+      nextBtn.classList.add('hidden');
+    }
+  }
+
   const save = h('button', { type: 'submit', class: 'btn-primary btn-block' }, 'Lagre pall');
   const todayList = h('div');
 
@@ -241,19 +264,21 @@ async function viewNew() {
     await busy(save, 'Lagrer …', async () => {
       try {
         const { pallet: p } = await api('POST', '/api/pallets', body);
-        store.set('pall.sist', { dato: me.today, fra: p.lay_from, til: p.lay_to, brett: p.trays });
+        store.set('pall.sist', { dato: today(), fra: p.lay_from, til: p.lay_to, brett: p.trays });
         setMsg(result, msg('ok', `Pall ${p.pallet_no} er lagret`,
           `Verpet ${period(p.lay_from, p.lay_to)} · ${eggs(p.trays)} · pakket ${fmtDate(p.packed_date)} av ${p.created_by}`));
         navigator.vibrate?.(60);
         no.value = '';
         no.focus();
         renderToday(todayList);
+        loadNext();
       } catch (err) {
         setMsg(result, msg('err', err.message));
       }
     });
   } },
   field('Pallnummer (fra kortet)', no),
+  nextBtn,
   h('div', { class: 'row stack-sm' }, field('Verpedato', from), toWrap),
   toggle,
   h('div', { class: 'field' }, h('span', { class: 'lbl' }, 'Pallstørrelse'),
@@ -262,18 +287,19 @@ async function viewNew() {
 
   render(h('h1', {}, 'Ny pall'), result, form, todayList);
   renderToday(todayList);
+  loadNext();
   no.focus();
 }
 
 async function renderToday(container) {
   try {
     const { pallets } = await api('GET', '/api/pallets?limit=200');
-    const today = pallets.filter((p) => p.packed_date === me.today);
-    if (!today.length) return container.replaceChildren();
+    const packed = pallets.filter((p) => p.packed_date === today());
+    if (!packed.length) return container.replaceChildren();
     container.replaceChildren(
-      h('h2', {}, `Pakket i dag (${today.length})`),
-      h('p', { class: 'muted small' }, `Totalt ${eggs(today.reduce((n, p) => n + p.trays, 0))}`),
-      h('ul', { class: 'small' }, today.slice(0, 15).map((p) =>
+      h('h2', {}, `Pakket i dag (${packed.length})`),
+      h('p', { class: 'muted small' }, `Totalt ${eggs(packed.reduce((n, p) => n + p.trays, 0))}`),
+      h('ul', { class: 'small' }, packed.slice(0, 15).map((p) =>
         h('li', {}, h('a', { href: `#pall/${p.id}` }, `Pall ${p.pallet_no}`), ` · ${period(p.lay_from, p.lay_to)} · ${num(p.trays)} brett · ${p.created_by}`))),
     );
   } catch {
@@ -292,15 +318,19 @@ async function viewDelivery(flash) {
 
   let pallets, stores;
   try {
-    [{ pallets }, stores] = await Promise.all([api('GET', '/api/pallets?status=lager&limit=1000'), loadStores(true)]);
+    [{ pallets }, stores] = await Promise.all([api('GET', '/api/pallets?status=leverbar&limit=1000'), loadStores(true)]);
   } catch (err) {
     return render(h('h1', {}, 'Levering'), msg('err', err.message));
   }
   pallets.sort((a, b) => a.pallet_no.localeCompare(b.pallet_no, 'nb', { numeric: true }));
 
+  // Ruten: leveringer som er lagt til, men ikke lagret ennå. Alt lagres samlet til slutt.
+  const route = [];
+  const inRoute = new Set();
   const selected = new Set();
   const sumText = h('span', { class: 'sumtext' });
   const tiles = h('div', { class: 'tiles' });
+  const filter = h('input', { type: 'search', placeholder: 'Finn pallnummer …', inputMode: 'numeric', 'aria-label': 'Finn pall' });
   const tileEls = pallets.map((p) => {
     const cb = h('input', { type: 'checkbox', 'aria-label': `Pall ${p.pallet_no}` });
     const tile = h('label', { class: 'tile' }, cb,
@@ -315,21 +345,21 @@ async function viewDelivery(flash) {
     return tile;
   });
   tiles.append(...tileEls);
+  const stockTitle = h('h2', { style: 'margin-top:0' });
+  const noStock = h('p', { class: 'muted hidden' }, 'Ingen flere paller på lager.');
 
-  const filter = h('input', { type: 'search', placeholder: 'Finn pallnummer …', inputMode: 'numeric', 'aria-label': 'Finn pall' });
-  filter.addEventListener('input', () => {
+  function showTiles() {
     const q = filter.value.trim().toUpperCase();
-    for (const t of tileEls) t.classList.toggle('hidden', q && !t._p.pallet_no.includes(q));
-  });
+    for (const t of tileEls) t.classList.toggle('hidden', inRoute.has(t._p.id) || (!!q && !t._p.pallet_no.includes(q)));
+    const left = pallets.length - inRoute.size;
+    stockTitle.textContent = `1. Velg paller på lager (${left})`;
+    noStock.classList.toggle('hidden', left > 0);
+  }
+  filter.addEventListener('input', showTiles);
 
   const chosen = () => pallets.filter((p) => selected.has(p.id));
-  function updSum() {
-    const c = chosen();
-    sumText.textContent = c.length
-      ? `${c.length} ${c.length === 1 ? 'pall' : 'paller'} valgt · ${eggs(c.reduce((n, p) => n + p.trays, 0))}`
-      : 'Ingen paller valgt';
-  }
-  updSum();
+  const count = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const trayTotal = (list) => list.reduce((n, p) => n + p.trays, 0);
 
   // Butikk
   const storeSel = h('select', { id: 'store', 'aria-label': 'Butikk' }, storeOptions(stores));
@@ -345,49 +375,125 @@ async function viewDelivery(flash) {
     newStoreBox.classList.add('hidden');
     renderStoreAdmin();
   }));
+  const storeById = (id) => (storesCache || stores).find((s) => String(s.id) === String(id));
 
   const orderRef = h('input', { id: 'order_ref', autocomplete: 'off', maxLength: 60, 'aria-label': 'Ordre-/fakturanummer' });
-  const date = h('input', { type: 'date', id: 'delivery_date', value: me.today, 'aria-label': 'Leveringsdato' });
+  // Leveringsdato: felles for hele ruten, og huskes til neste registrering samme dag.
+  const date = h('input', {
+    type: 'date', id: 'delivery_date', 'aria-label': 'Leveringsdato',
+    value: deliveryDateMemo?.day === today() ? deliveryDateMemo.value : today(),
+  });
+  const dateHint = h('div', { class: 'hint' });
+  function updDate() {
+    if (date.value) deliveryDateMemo = { day: today(), value: date.value };
+    dateHint.textContent = !date.value || date.value === today() ? '' : `Obs: datoen er ikke i dag (${fmtDate(today())}).`;
+    dateHint.classList.toggle('warn', !!dateHint.textContent);
+  }
+  date.addEventListener('change', updDate);
+  updDate();
 
-  const submit = h('button', { type: 'button', class: 'btn-primary', onclick: () => {
-    setMsg(result, null);
+  /** Leser leveringen som fylles ut nå. Tom = null. Ufullstendig = feilmelding. */
+  function currentLine() {
     const c = chosen();
+    const started = c.length || storeSel.value || orderRef.value.trim();
+    if (!started) return { line: null };
     const errs = [];
     if (!c.length) errs.push('Velg minst én pall.');
     if (!storeSel.value) errs.push('Velg butikk.');
     if (!orderRef.value.trim()) errs.push('Skriv inn ordre-/fakturanummer.');
-    if (!date.value) errs.push('Velg leveringsdato.');
-    if (errs.length) return setMsg(result, msg('err', errs.join(' ')));
-    confirmDelivery(c, stores.find((s) => String(s.id) === storeSel.value) || storesCache.find((s) => String(s.id) === storeSel.value));
-  } }, 'Registrer levering');
+    if (errs.length) return { error: errs.join(' ') };
+    return { line: { pallets: c, store: storeById(storeSel.value), orderRef: orderRef.value.trim() } };
+  }
 
-  function confirmDelivery(c, st) {
-    const total = c.reduce((n, p) => n + p.trays, 0);
+  function clearCurrent() {
+    for (const t of tileEls) {
+      if (t._cb.checked) { t._cb.checked = false; t.classList.remove('sel'); }
+    }
+    selected.clear();
+    storeSel.value = '';
+    orderRef.value = '';
+  }
+
+  const routeBox = h('div');
+  function renderRoute() {
+    if (!route.length) return routeBox.replaceChildren();
+    const all = route.flatMap((l) => l.pallets);
+    routeBox.replaceChildren(h('div', { class: 'card', id: 'route' },
+      h('h2', { style: 'margin-top:0' }, `Rute: ${count(route.length, 'butikk', 'butikker')} · ${count(all.length, 'pall', 'paller')}`),
+      h('ul', { class: 'route-list' }, route.map((l, i) => h('li', {},
+        h('div', {},
+          h('b', {}, l.store.name), ` · ordre ${l.orderRef}`,
+          h('div', { class: 'small muted' }, `Pall ${l.pallets.map((p) => p.pallet_no).join(', ')} · ${num(trayTotal(l.pallets))} brett`)),
+        h('button', { type: 'button', class: 'btn-link', 'aria-label': `Fjern ${l.store.name} fra ruten`, onclick: () => {
+          for (const p of l.pallets) inRoute.delete(p.id);
+          route.splice(i, 1);
+          renderRoute();
+          showTiles();
+          updSum();
+        } }, 'Fjern')))),
+      h('p', { class: 'hint' }, 'Ingenting er lagret ennå. Ruten lagres samlet når du trykker «Registrer rute».')));
+  }
+
+  const submit = h('button', { type: 'button', class: 'btn-primary' });
+  const addBtn = h('button', { type: 'button', id: 'add_stop', onclick: () => {
+    setMsg(result, null);
+    const { line, error } = currentLine();
+    if (error || !line) return setMsg(result, msg('err', error || 'Velg paller, butikk og ordre-/fakturanummer før du legger til neste butikk.'));
+    route.push(line);
+    for (const p of line.pallets) inRoute.add(p.id);
+    clearCurrent();
+    renderRoute();
+    showTiles();
+    updSum();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } }, '+ Flere butikker');
+
+  function updSum() {
+    const c = chosen();
+    sumText.textContent = c.length ? `${count(c.length, 'pall', 'paller')} valgt · ${eggs(trayTotal(c))}` : 'Ingen paller valgt';
+    const n = route.length + (c.length ? 1 : 0);
+    submit.textContent = route.length ? `Registrer rute (${count(n, 'levering', 'leveringer')})` : 'Registrer levering';
+  }
+
+  submit.addEventListener('click', () => {
+    setMsg(result, null);
+    const { line, error } = currentLine();
+    if (error) return setMsg(result, msg('err', error));
+    const lines = line ? [...route, line] : [...route];
+    if (!lines.length) return setMsg(result, msg('err', 'Velg minst én pall.'));
+    if (!date.value) return setMsg(result, msg('err', 'Velg leveringsdato.'));
+    confirmDelivery(lines);
+  });
+
+  function confirmDelivery(lines) {
+    const all = lines.flatMap((l) => l.pallets);
     const errBox = h('div');
     const ok = h('button', { class: 'btn-primary', onclick: async () => {
       await busy(ok, 'Lagrer …', async () => {
         try {
-          const r = await api('POST', '/api/deliveries', {
-            pallet_ids: c.map((p) => p.id), store_id: st.id, order_ref: orderRef.value, delivery_date: date.value,
+          const r = await api('POST', '/api/deliveries/batch', {
+            delivery_date: date.value,
+            deliveries: lines.map((l) => ({ store_id: l.store.id, order_ref: l.orderRef, pallet_ids: l.pallets.map((p) => p.id) })),
           });
           closeDialog();
-          const d = r.delivery;
-          viewDelivery(msg('ok', 'Levering registrert',
-            `${r.pallets.length} ${r.pallets.length === 1 ? 'pall' : 'paller'} (${r.pallets.map((p) => p.pallet_no).join(', ')}) · ` +
-            `${eggs(r.pallets.reduce((n, p) => n + p.trays, 0))} til ${d.store_name}, ordre ${d.order_ref}, ${fmtDate(d.delivery_date)}`));
+          const d = r.deliveries;
+          const saved = d.flatMap((x) => x.pallets);
+          viewDelivery(msg('ok', d.length === 1 ? 'Levering registrert' : `${d.length} leveringer registrert`,
+            `${count(saved.length, 'pall', 'paller')} · ${eggs(trayTotal(saved))} · ${fmtDate(d[0].delivery.delivery_date)} · ` +
+            d.map((x) => `${x.delivery.store_name}, ordre ${x.delivery.order_ref} (${x.pallets.map((p) => p.pallet_no).join(', ')})`).join(' · ')));
         } catch (err) {
           setMsg(errBox, msg('err', err.message));
         }
       });
-    } }, 'Bekreft levering');
+    } }, lines.length === 1 ? 'Bekreft levering' : `Bekreft ${lines.length} leveringer`);
     openDialog(
-      h('h2', { style: 'margin-top:0' }, 'Bekreft levering'),
+      h('h2', { style: 'margin-top:0' }, lines.length === 1 ? 'Bekreft levering' : 'Bekreft rute'),
       h('dl', { class: 'facts' },
-        h('dt', {}, 'Butikk'), h('dd', {}, st.name),
-        h('dt', {}, 'Ordre/faktura'), h('dd', {}, orderRef.value.trim()),
-        h('dt', {}, 'Leveringsdato'), h('dd', {}, fmtDate(date.value))),
-      h('ul', { class: 'confirm-list' }, c.map((p) => h('li', {}, h('b', {}, `Pall ${p.pallet_no}`), h('span', {}, `${num(p.trays)} brett`)))),
-      h('p', {}, h('b', {}, `Totalt ${c.length} ${c.length === 1 ? 'pall' : 'paller'} · ${eggs(total)}`)),
+        h('dt', {}, 'Leveringsdato'), h('dd', {}, fmtDate(date.value), date.value === today() ? '' : ' (ikke i dag)')),
+      lines.map((l) => h('div', { class: 'confirm-stop' },
+        h('div', {}, h('b', {}, l.store.name), ` · ordre ${l.orderRef}`),
+        h('ul', { class: 'confirm-list' }, l.pallets.map((p) => h('li', {}, h('b', {}, `Pall ${p.pallet_no}`), h('span', {}, `${num(p.trays)} brett`)))))),
+      h('p', {}, h('b', {}, `Totalt ${count(all.length, 'pall', 'paller')} · ${eggs(trayTotal(all))}`)),
       errBox,
       h('div', { class: 'actions' }, ok, h('button', { onclick: closeDialog }, 'Avbryt')),
     );
@@ -414,22 +520,25 @@ async function viewDelivery(flash) {
     );
   }
   renderStoreAdmin();
+  showTiles();
+  updSum();
 
   render(
     h('h1', {}, 'Levering'),
     result,
+    routeBox,
     h('div', { class: 'card' },
-      h('h2', { style: 'margin-top:0' }, `1. Velg paller på lager (${pallets.length})`),
+      stockTitle,
       pallets.length > 8 ? h('div', { style: 'margin-bottom:12px' }, filter) : null,
-      pallets.length ? tiles : h('p', { class: 'muted' }, 'Ingen paller på lager.')),
+      pallets.length ? [tiles, noStock] : h('p', { class: 'muted' }, 'Ingen paller på lager.')),
     h('div', { class: 'card narrow' },
       h('h2', { style: 'margin-top:0' }, '2. Butikk og ordre'),
       h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Butikk'), storeSel),
       newStoreBtn, newStoreBox,
       h('div', { style: 'height:12px' }),
       field('Ordre-/fakturanummer', orderRef),
-      field('Leveringsdato', date)),
-    h('div', { class: 'sumbar' }, sumText, submit),
+      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Leveringsdato'), date, dateHint)),
+    h('div', { class: 'sumbar' }, sumText, h('div', { class: 'actions', style: 'margin:0' }, addBtn, submit)),
     storeAdmin,
   );
 }
@@ -478,6 +587,11 @@ async function viewOverview(params) {
   const storeSel = h('select', {}, storeOptions(stores, q.get('store'), 'Alle butikker'));
   const from = h('input', { type: 'date', value: q.get('from') || '' });
   const to = h('input', { type: 'date', value: q.get('to') || '' });
+  const dfrom = h('input', { type: 'date', id: 'q_dfrom', value: q.get('dfrom') || '' });
+  const dto = h('input', { type: 'date', id: 'q_dto', value: q.get('dto') || '' });
+  const statusSel = h('select', { id: 'q_status' },
+    [['', 'Alle'], ['lager', 'På lager'], ['levert', 'Levert'], ['sperret', 'Sperret'], ['annullert', 'Annullert']]
+      .map(([v, t]) => h('option', { value: v, selected: v === (q.get('status') || '') }, t)));
 
   const form = h('form', { class: 'card', onsubmit: (e) => {
     e.preventDefault();
@@ -487,14 +601,18 @@ async function viewOverview(params) {
     if (storeSel.value) p.set('store', storeSel.value);
     if (from.value) p.set('from', from.value);
     if (to.value) p.set('to', to.value);
+    if (dfrom.value) p.set('dfrom', dfrom.value);
+    if (dto.value) p.set('dto', dto.value);
+    if (statusSel.value) p.set('status', statusSel.value);
     const hash = `#oversikt?${p}`;
     if (location.hash === hash) viewOverview(p.toString());
     else location.hash = hash;
   } },
   h('div', { class: 'row' }, field('Pallnummer', no), field('Ordre-/fakturanr', order)),
-  field('Butikk', storeSel),
+  h('div', { class: 'row' }, field('Butikk', storeSel), field('Status', statusSel)),
   h('div', { class: 'row' }, field('Verpedato fra', from), field('Verpedato til', to)),
   h('p', { class: 'hint', style: 'margin-top:-8px' }, 'Datosøk finner alle paller der verpeperioden overlapper søkeperioden.'),
+  h('div', { class: 'row' }, field('Levert fra', dfrom), field('Levert til', dto)),
   h('div', { class: 'actions' },
     h('button', { type: 'submit', class: 'btn-primary' }, 'Søk'),
     h('button', { type: 'button', onclick: () => { location.hash = '#oversikt'; } }, 'Nullstill')));
@@ -590,7 +708,7 @@ async function markAffected(chosen) {
   try {
     recalls = (await api('GET', '/api/recalls')).recalls;
   } catch { /* bare ny */ }
-  const title = h('input', { maxLength: 120, placeholder: `Tilbakekalling ${fmtDate(me.today)}` });
+  const title = h('input', { maxLength: 120, placeholder: `Tilbakekalling ${fmtDate(today())}` });
   const rNew = h('input', { type: 'radio', name: 'rc', checked: true });
   const rOld = h('input', { type: 'radio', name: 'rc' });
   const oldSel = h('select', { onchange: () => { rOld.checked = true; } }, recalls.map((r) => h('option', { value: r.id }, `${r.title} (${fmtDate(r.opened_date)})`)));
@@ -709,8 +827,8 @@ async function viewPallet(id, flash) {
   const actions = [];
   if (p.status !== 'annullert') {
     actions.push(h('button', { class: 'btn-sm', onclick: () => {
-      const from = h('input', { type: 'date', value: p.lay_from, max: me.today });
-      const to = h('input', { type: 'date', value: p.lay_to, max: me.today });
+      const from = h('input', { type: 'date', value: p.lay_from, max: today() });
+      const to = h('input', { type: 'date', value: p.lay_to, max: today() });
       const trays = h('input', { inputMode: 'numeric', value: p.trays });
       reasonForm('Rett verpedato / antall brett',
         [h('div', { class: 'row' }, field('Verpedato fra', from), field('Verpedato til', to)), field('Antall brett', trays)],
@@ -812,7 +930,7 @@ async function viewRecall(id, flash) {
           h('button', { class: 'btn-link', onclick: () => renderNotice(true) }, 'Endre varsling'));
         return;
       }
-      const date = h('input', { type: 'date', value: n?.notified_date || me.today, max: me.today });
+      const date = h('input', { type: 'date', value: n?.notified_date || today(), max: today() });
       const note = h('textarea', { maxLength: 500, placeholder: 'f.eks. Snakket med butikksjef, varer tatt ut av hylla' }, n?.note || '');
       const err = h('div');
       const btn = h('button', { type: 'submit', class: 'btn-primary' }, 'Registrer «Butikk varslet»');
@@ -902,6 +1020,7 @@ async function router() {
   document.querySelectorAll('.tabs a').forEach((a) => a.classList.toggle('active', a.dataset.tab === tab));
   if (dialog.open) closeDialog();
   window.scrollTo(0, 0);
+  renderedDay = today();
   if (name === 'levering') return viewDelivery();
   if (name === 'oversikt') return viewOverview(query);
   if (name === 'pall' && arg) return viewPallet(Number(arg));
@@ -918,6 +1037,10 @@ async function start() {
     return;
   }
   window.addEventListener('hashchange', router);
+  // Ny dag siden skjermbildet ble tegnet (appen har stått åpen over natten): tegn på nytt med dagens dato.
+  const newDay = () => { if (!document.hidden && renderedDay !== today()) router(); };
+  document.addEventListener('visibilitychange', newDay);
+  window.addEventListener('focus', newDay);
   router();
 }
 
